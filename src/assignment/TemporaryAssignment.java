@@ -59,6 +59,10 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
         return String.format("%d days, %d hours, %d minutes", days, hours, minutes);
     }
 
+    public String getExpiresAt() {
+        return expiresAt;
+    }
+
     @Override
     public String summary() {
         String status = isActive() ? "ACTIVE" : "EXPIRED";
