@@ -14,27 +14,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up JDK 21
         uses: actions/setup-java@v3
         with:
           java-version: '21'
           distribution: 'temurin'
-      - name: Compile Java files
-        run: |
-          mkdir -p out
-          find src -name "*.java" -print | xargs javac -d out
-          echo "Компиляция прошла успешно!"
-      - name: Create JAR
-        run: |
-          jar cf rbac-app.jar -C out .
-          echo "JAR создан: rbac-app.jar"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build with Gradle Wrapper
+        run: ./gradlew build
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: rbac-app
-          path: rbac-app.jar
+          path: build/libs/*.jar
+
       - name: Show branch information
         run: |
           echo "Сборка запущена для ветки ${{ github.ref_name }}"
