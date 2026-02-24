@@ -65,7 +65,7 @@ public class UserManager implements Repository<User> {
                 .collect(Collectors.toList());
     }
 
-    public List<User> fingAll(UserFilter filter, Comparator<User> sorter) {
+    public List<User> findAll(UserFilter filter, Comparator<User> sorter) {
         return usersByUsername.values().stream()
                 .filter(user -> filter.test(user))
                 .sorted((u1, u2) -> sorter.compare(u1, u2))
