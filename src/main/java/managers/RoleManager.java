@@ -11,6 +11,11 @@ public class RoleManager implements Repository<Role> {
     private Map<String, Role> rolesById = new HashMap<>();
     private Map<String, Role> rolesByName = new HashMap<>();
 
+    private AssignmentManager assignmentManager;
+    public void setAssignmentManager(AssignmentManager assignmentManager) {
+        this.assignmentManager = assignmentManager;
+    }
+
     // Repository methods
     @Override
     public void add(Role role) {
@@ -32,7 +37,11 @@ public class RoleManager implements Repository<Role> {
     public boolean remove(Role role) {
         if (role == null) return false;
 
-        // TODO: Проверка, не назначена ли роль пользователям
+        // Проверка, не назначена ли роль пользователям
+        if (assignmentManager != null && assignmentManager.isRoleAssigned(role)) {
+            throw new IllegalStateException("Cannot delete role '" + role.getName() +
+                    "' because it is assigned to users.");
+        }
 
         Role removed = rolesById.remove(role.getId());
         if (removed != null) {
