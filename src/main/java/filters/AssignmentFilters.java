@@ -2,7 +2,6 @@ package filters;
 
 import model.User;
 import model.Role;
-import assignment.RoleAssignment;
 import assignment.TemporaryAssignment;
 import java.time.format.DateTimeFormatter;
 import java.time.LocalDateTime;
