@@ -41,7 +41,7 @@ public class CommandParser {
     public void parseAndExecute(String input, Scanner scanner, RBACSystem system) {
         if (input == null || input.trim().isEmpty()) return;
 
-        String[] parts = input.trim().split("\\s+, 2");
+        String[] parts = input.trim().split("\\s+", 2);
         String commandName = parts[0].toLowerCase();
 
         executeCommand(commandName, scanner, system);
