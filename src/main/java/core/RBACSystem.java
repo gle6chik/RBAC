@@ -4,6 +4,7 @@ import managers.*;
 import model.*;
 import assignment.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class RBACSystem {
     private UserManager userManager;
@@ -93,21 +94,47 @@ public class RBACSystem {
 
         int userCount = userManager.count();
         int roleCount = roleManager.count();
-        int totalAssignments = assignmentManager.count();
-        long activeAssignments = assignmentManager.getActiveAssignments().size();
-        long expiredAssignments = assignmentManager.getExpiredAssignments().size();
+
+        // 1. Исправлено: Сначала получаем списки, чтобы знать их размер и иметь доступ к stream()
+        List<RoleAssignment> allAssignments = assignmentManager.findAll();
+        List<RoleAssignment> activeList = assignmentManager.getActiveAssignments();
+        List<RoleAssignment> expiredList = assignmentManager.getExpiredAssignments();
+
+        int totalCount = allAssignments.size();
+        long activeCount = activeList.size();
+        long expiredCount = expiredList.size();
 
         sb.append(String.format("Users: %d\n", userCount));
         sb.append(String.format("Roles: %d\n", roleCount));
         sb.append(String.format("Assignments: total=%d, active=%d, expired=%d\n",
-                totalAssignments, activeAssignments, expiredAssignments));
+                totalCount, activeCount, expiredCount));
+
+        // 2. Исправлено: Среднее количество ролей на пользователя
+        // Используем totalCount (число), а не totalAssignments.size()
+        double avgRoles = userCount == 0 ? 0 : (double) totalCount / userCount;
+        sb.append(String.format("Average roles per user: %.2f\n", avgRoles));
+
+        // 3. Топ-3 самых популярных ролей
+        sb.append("\nTop 3 Popular Roles:\n");
+
+        // Группируем по имени роли, используя общий список всех назначений
+        Map<String, Long> roleUsageCount = allAssignments.stream()
+                .collect(Collectors.groupingBy(a -> a.role().getName(), Collectors.counting()));
+
+        roleUsageCount.entrySet().stream()
+                .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+                .limit(3)
+                .forEach(entry -> sb.append(String.format(" - %s: %d assignments\n", entry.getKey(), entry.getValue())));
 
         sb.append("=".repeat(50) + "\n");
         return sb.toString();
     }
 
     public void clearScreen() {
-        System.out.print("\033[H\033[2J");
+        System.out.print("\033[H\033[2J"); // Для стандартного терминала
+        for (int i = 0; i < 100; i++) { // Для OpenIDE
+            System.out.println();
+        }
         System.out.flush();
     }
 }

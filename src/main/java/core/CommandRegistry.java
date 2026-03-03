@@ -5,14 +5,10 @@ import assignment.*;
 import filters.*;
 import managers.*;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class CommandRegistry {
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
     public static void registerAll(CommandParser parser) {
         registerUserCommands(parser);
         registerRoleCommands(parser);
@@ -21,7 +17,7 @@ public class CommandRegistry {
         registerUtilityCommands(parser);
     }
 
-    // --- 1. USER COMMANDS ---
+    // USER COMMANDS
     private static void registerUserCommands(CommandParser parser) {
         parser.registerCommand("user-list", "List all users with optional filters", (scanner, system) -> {
             UserManager um = system.getUserManager();
@@ -55,16 +51,42 @@ public class CommandRegistry {
         parser.registerCommand("user-view", "View detailed user info", (scanner, system) -> {
             System.out.print("Enter username: ");
             String username = scanner.nextLine().trim();
-            system.getUserManager().findByUsername(username).ifPresentOrElse(user -> {
-                System.out.println("\n" + user.format());
-                var assignments = system.getAssignmentManager().findByFilter(AssignmentFilters.byUsername(username));
-                System.out.println("Assigned Roles:");
-                assignments.forEach(a -> System.out.println(" - " + a.role().getName() + " [" + a.assignmentType() + "] Status: " + (a.isActive() ? "ACTIVE" : "INACTIVE")));
 
-                System.out.println("Total Permissions:");
-                system.getAssignmentManager().getUserPermissions(user)
-                        .forEach(p -> System.out.println(" [!] " + p.format()));
-            }, () -> System.out.println("User not found."));
+            system.getUserManager().findByUsername(username).ifPresentOrElse(user -> {
+                System.out.println(user.format());
+
+                var assignments = system.getAssignmentManager().findByFilter(
+                        filters.AssignmentFilters.byUsername(username)
+                );
+                var allPermissions = system.getAssignmentManager().getUserPermissions(user);
+
+                if (assignments.isEmpty()) {
+                    System.out.println("[No roles assigned to this user]");
+                } else {
+                    assignments.forEach(a -> {
+                        String type = a.assignmentType();
+                        String status = a.isActive() ? "ACTIVE" : "INACTIVE/EXPIRED";
+
+                        System.out.printf("\nType: %s | Status: [%s]\n", type, status);
+
+                        if (a instanceof TemporaryAssignment temp) {
+                            System.out.println("Validity: " + temp.summary());
+                        }
+
+                        System.out.println(a.role().format());
+                        System.out.println("=".repeat(30));
+                    });
+                }
+
+                if (allPermissions.isEmpty()) {
+                    System.out.println("  [No active permissions found]");
+                } else {
+                    System.out.println("All permissions for this user:");
+                    allPermissions.forEach(p -> System.out.println("    - " + p.format()));
+                }
+                System.out.println("=".repeat(60));
+
+            }, () -> System.out.println("Error: User '" + username + "' not found."));
         });
 
         parser.registerCommand("user-update", "Update user data", (scanner, system) -> {
@@ -101,7 +123,7 @@ public class CommandRegistry {
         });
     }
 
-    // --- 2. ROLE COMMANDS ---
+    // ROLE COMMANDS
     private static void registerRoleCommands(CommandParser parser) {
         parser.registerCommand("role-list", "List all roles", (scanner, system) -> {
             System.out.printf("%-20s | %-15s | %s%n", "Role Name", "Perms Count", "ID");
@@ -121,7 +143,6 @@ public class CommandRegistry {
             addPermissionsLoop(scanner, role);
         });
 
-        // НОВОЕ: role-view
         parser.registerCommand("role-view", "View role details", (scanner, system) -> {
             System.out.print("Enter role name: ");
             String name = scanner.nextLine().trim();
@@ -130,7 +151,6 @@ public class CommandRegistry {
                     () -> System.out.println("Role not found."));
         });
 
-        // НОВОЕ: role-update
         parser.registerCommand("role-update", "Update role description", (scanner, system) -> {
             System.out.print("Enter role name to update: ");
             String name = scanner.nextLine().trim();
@@ -175,7 +195,6 @@ public class CommandRegistry {
             } catch (Exception e) { System.out.println(e.getMessage()); }
         });
 
-        // role-remove-permission
         parser.registerCommand("role-remove-permission", "Remove permission from role", (scanner, system) -> {
             System.out.print("Role name: ");
             String rName = scanner.nextLine().trim();
@@ -195,20 +214,51 @@ public class CommandRegistry {
 
         parser.registerCommand("role-search", "Search roles", (scanner, system) -> {
             System.out.println("1. By name (contains)\n2. By permission name\n3. By min permissions count");
+            System.out.print("Select filter number: ");
             String choice = scanner.nextLine().trim();
-            System.out.print("Enter value: ");
-            String val = scanner.nextLine().trim();
+
             List<Role> found = switch (choice) {
-                case "1" -> system.getRoleManager().findByFilter(RoleFilters.byNameContains(val));
-                case "2" -> system.getRoleManager().findByFilter(RoleFilters.hasPermission(val, ""));
-                case "3" -> system.getRoleManager().findByFilter(RoleFilters.hasAtLeastNPermissions(Integer.parseInt(val)));
-                default -> system.getRoleManager().findAll();
+                case "1" -> {
+                    System.out.print("Enter role name: ");
+                    String rName = scanner.nextLine().trim();
+                    yield system.getRoleManager().findByFilter(RoleFilters.byNameContains(rName));
+                }
+                case "2" -> {
+                    System.out.print("Enter permission name: ");
+                    String pName = scanner.nextLine().trim();
+                    System.out.print("Enter resource (optional): ");
+                    String pRes = scanner.nextLine().trim();
+                    yield system.getRoleManager().findByFilter(role ->
+                            role.getPermissions().stream().anyMatch(p ->
+                                    p.name().equalsIgnoreCase(pName) &&
+                                            (pRes.isEmpty() || p.resource().equalsIgnoreCase(pRes))
+                            )
+                    );
+                }
+                case "3" -> {
+                    System.out.print("Enter minimum count: ");
+                    try {
+                        int min = Integer.parseInt(scanner.nextLine().trim());
+                        yield system.getRoleManager().findByFilter(RoleFilters.hasAtLeastNPermissions(min));
+                    } catch (NumberFormatException e) {
+                        yield new ArrayList<>();
+                    }
+                }
+                default -> {
+                    System.out.println("Unknown filter. Showing all.");
+                    yield system.getRoleManager().findAll();
+                }
             };
-            found.forEach(r -> System.out.println(r.getName() + " (" + r.getPermissions().size() + " perms)"));
+
+            if (found.isEmpty()) {
+                System.out.println("No roles found.");
+            } else {
+                found.forEach(r -> System.out.println(" - " + r.getName() + " (" + r.getPermissions().size() + " perms)"));
+            }
         });
     }
 
-    // --- 3. ASSIGNMENT COMMANDS ---
+    // ASSIGNMENT COMMANDS
     private static void registerAssignmentCommands(CommandParser parser) {
         parser.registerCommand("assign-role", "Assign role to user", (scanner, system) -> {
             try {
@@ -271,7 +321,6 @@ public class CommandRegistry {
             printAssignmentTable(system.getAssignmentManager().findByFilter(AssignmentFilters.byUsername(name)));
         });
 
-        // НОВОЕ: assignment-list-role
         parser.registerCommand("assignment-list-role", "Users with specific role", (scanner, system) -> {
             System.out.print("Enter role name: ");
             String rName = scanner.nextLine().trim();
@@ -284,42 +333,114 @@ public class CommandRegistry {
             printAssignmentTable(system.getAssignmentManager().findByFilter(AssignmentFilters.activeOnly()));
         });
 
-        // НОВОЕ: assignment-expired
-        parser.registerCommand("assignment-expired", "Show expired assignments", (scanner, system) -> {
-            printAssignmentTable(system.getAssignmentManager().findByFilter(AssignmentFilters.inactiveOnly()));
+        parser.registerCommand("assignment-expired", "Show expired temporary assignments details", (scanner, system) -> {
+            var allAssignments = system.getAssignmentManager().findAll();
+
+            var expiredAssignments = allAssignments.stream()
+                    .filter(a -> a.assignmentType().equalsIgnoreCase("TEMPORARY"))
+                    .filter(a -> !a.isActive())
+                    .toList();
+
+            System.out.println("\nEXPIRED TEMPORARY ASSIGNMENTS:");
+            System.out.printf("%-15s | %-15s | %-10s%n", "User", "Role", "Status");
+            System.out.println("-".repeat(50));
+
+            if (expiredAssignments.isEmpty()) {
+                System.out.println("No expired temporary assignments found.");
+            } else {
+                expiredAssignments.forEach(a -> {
+                    String username = a.user().username();
+                    String roleName = a.role().getName();
+                    String status = "EXPIRED";
+
+                    System.out.printf("%-15s | %-15s | %-10s%n",
+                            username,
+                            roleName,
+                            status);
+                });
+            }
         });
 
-        parser.registerCommand("assignment-extend", "Extend assignment", (scanner, system) -> {
-            System.out.print("Enter Assignment ID: ");
-            String input = scanner.nextLine().trim();
-            System.out.print("New expiration (yyyy-MM-dd HH:mm): ");
-            String newDate = scanner.nextLine().trim();
-            try {
-                system.getAssignmentManager().extendTemporaryAssignment(input, newDate);
-                System.out.println("Extended.");
-            } catch (Exception e) { System.out.println(e.getMessage()); }
+        parser.registerCommand("assignment-extend", "Extend temporary assignment", (scanner, system) -> {
+            System.out.print("Enter username: ");
+            String username = scanner.nextLine().trim();
+
+            System.out.print("Enter role name: ");
+            String roleName = scanner.nextLine().trim();
+
+            var userOpt = system.getUserManager().findByUsername(username);
+            var roleOpt = system.getRoleManager().findByName(roleName);
+
+            if (userOpt.isPresent() && roleOpt.isPresent()) {
+                var assignment = system.getAssignmentManager().findAll().stream()
+                        .filter(a -> a.user().equals(userOpt.get()))
+                        .filter(a -> a.role().equals(roleOpt.get()))
+                        .filter(a -> a.assignmentType().equalsIgnoreCase("TEMPORARY"))
+                        .findFirst();
+
+                if (assignment.isPresent()) {
+                    System.out.print("Enter new expiration date (yyyy-MM-dd HH:mm): ");
+                    String newDateStr = scanner.nextLine().trim();
+
+                    try {
+                        system.getAssignmentManager().extendTemporaryAssignment(assignment.get().assignmentId(), newDateStr);
+
+                        System.out.println("Success: Assignment extended. Status is now: " +
+                                (assignment.get().isActive() ? "ACTIVE" : "STILL EXPIRED (check date)"));
+                    } catch (Exception e) {
+                        System.out.println("Error: " + e.getMessage());
+                    }
+                } else {
+                    System.out.println("Error: No temporary assignment found for this user/role pair.");
+                }
+            } else {
+                System.out.println("Error: User or Role not found.");
+            }
         });
 
-        // НОВОЕ: assignment-search
         parser.registerCommand("assignment-search", "Search assignments by filter", (scanner, system) -> {
-            System.out.println("1. By User\n2. By Role\n3. By Type\n4. By Status (active)\n5. After Date\n6. Expiring before Date");
+            System.out.println("\n1. By User\n2. By Role\n3. By Type (permanent/temporary)\n4. By Status (active/inactive)\n5. After Date\n6. Expiring before Date");
+            System.out.print("Select filter number: ");
             String choice = scanner.nextLine().trim();
-            System.out.print("Enter value: ");
-            String val = scanner.nextLine().trim();
+
             var filter = switch(choice) {
-                case "1" -> AssignmentFilters.byUsername(val);
-                case "2" -> AssignmentFilters.byRoleName(val);
-                case "3" -> AssignmentFilters.byType(val.toUpperCase());
-                case "4" -> AssignmentFilters.activeOnly();
-                case "5" -> AssignmentFilters.assignedAfter(val);
-                case "6" -> AssignmentFilters.expiringBefore(val);
-                default -> AssignmentFilters.activeOnly();
+                case "1" -> {
+                    System.out.print("Enter username: ");
+                    yield AssignmentFilters.byUsername(scanner.nextLine().trim());
+                }
+                case "2" -> {
+                    System.out.print("Enter role name: ");
+                    yield AssignmentFilters.byRoleName(scanner.nextLine().trim());
+                }
+                case "3" -> {
+                    System.out.print("Enter type (PERMANENT/TEMPORARY): ");
+                    yield AssignmentFilters.byType(scanner.nextLine().trim().toUpperCase());
+                }
+                case "4" -> {
+                    System.out.print("Enter status (active/inactive): ");
+                    String status = scanner.nextLine().trim().toLowerCase();
+                    if (status.equals("inactive")) yield AssignmentFilters.inactiveOnly();
+                    yield AssignmentFilters.activeOnly(); // По умолчанию активные
+                }
+                case "5" -> {
+                    System.out.print("Enter start date (yyyy-MM-dd HH:mm): ");
+                    yield AssignmentFilters.assignedAfter(scanner.nextLine().trim());
+                }
+                case "6" -> {
+                    System.out.print("Enter end date (yyyy-MM-dd HH:mm): ");
+                    yield AssignmentFilters.expiringBefore(scanner.nextLine().trim());
+                }
+                default -> {
+                    System.out.println("Invalid choice. Showing active assignments.");
+                    yield AssignmentFilters.activeOnly();
+                }
             };
+
             printAssignmentTable(system.getAssignmentManager().findByFilter(filter));
         });
     }
 
-    // --- 4. PERMISSION COMMANDS ---
+    // PERMISSION COMMANDS
     private static void registerPermissionCommands(CommandParser parser) {
         parser.registerCommand("permissions-user", "User permissions by resource", (scanner, system) -> {
             System.out.print("Username: ");
@@ -366,8 +487,7 @@ public class CommandRegistry {
         });
     }
 
-    // --- HELPERS ---
-
+    // HELPERS
     private static List<User> searchUsersLogic(Scanner scanner, UserManager um) {
         System.out.println("1. Username (contains)\n2. Email (contains)\n3. Email Domain\n4. Full Name (contains)");
         String choice = scanner.nextLine().trim();
