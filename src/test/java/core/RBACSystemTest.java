@@ -65,7 +65,7 @@ class RBACSystemTest {
         assertTrue(stats.contains("Users: 2"));
         assertTrue(stats.contains("Roles: 3"));
         assertTrue(stats.contains("Assignments: total=3"));
-        assertTrue(stats.contains("Average roles per user: 1,50"));
+        assertTrue(stats.contains("Average roles per user: 1.50"));
 
         assertTrue(stats.contains("Top 3 Popular Roles:"));
     }
@@ -73,7 +73,7 @@ class RBACSystemTest {
     @Test
     void testGenerateStatisticsEmpty() {
         String stats = system.generateStatistics();
-        assertTrue(stats.contains("Average roles per user: 0,00"));
+        assertTrue(stats.contains("Average roles per user: 0.00"));
     }
 
     @Test

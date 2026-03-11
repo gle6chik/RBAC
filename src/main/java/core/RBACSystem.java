@@ -95,7 +95,6 @@ public class RBACSystem {
         int userCount = userManager.count();
         int roleCount = roleManager.count();
 
-        // 1. Исправлено: Сначала получаем списки, чтобы знать их размер и иметь доступ к stream()
         List<RoleAssignment> allAssignments = assignmentManager.findAll();
         List<RoleAssignment> activeList = assignmentManager.getActiveAssignments();
         List<RoleAssignment> expiredList = assignmentManager.getExpiredAssignments();
@@ -109,15 +108,12 @@ public class RBACSystem {
         sb.append(String.format("Assignments: total=%d, active=%d, expired=%d\n",
                 totalCount, activeCount, expiredCount));
 
-        // 2. Исправлено: Среднее количество ролей на пользователя
-        // Используем totalCount (число), а не totalAssignments.size()
-        double avgRoles = userCount == 0 ? 0 : (double) totalCount / userCount;
-        sb.append(String.format("Average roles per user: %.2f\n", avgRoles));
 
-        // 3. Топ-3 самых популярных ролей
+        double avgRoles = userCount == 0 ? 0 : (double) totalCount / userCount;
+        sb.append(String.format(Locale.US, "Average roles per user: %.2f\n", avgRoles));
+
         sb.append("\nTop 3 Popular Roles:\n");
 
-        // Группируем по имени роли, используя общий список всех назначений
         Map<String, Long> roleUsageCount = allAssignments.stream()
                 .collect(Collectors.groupingBy(a -> a.role().getName(), Collectors.counting()));
 
