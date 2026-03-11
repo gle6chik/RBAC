@@ -18,6 +18,59 @@ public class CommandRegistry {
         registerAssignmentCommands(parser);
         registerPermissionCommands(parser);
         registerUtilityCommands(parser);
+        registerReportCommands(parser);
+    }
+
+    private static void registerReportCommands(CommandParser parser) {
+        parser.registerCommand("report-users", "Generate user report", (scanner, system) -> {
+            System.out.println("\nGenerating user report...");
+
+            String report = ReportGenerator.generateUserReport(
+                    system.getUserManager(),
+                    system.getAssignmentManager()
+            );
+
+            // Показываем отчёт
+            System.out.println(report);
+
+            // Предлагаем сохранить
+            ReportGenerator.exportToFile(
+                    report,
+                    "user_report.txt"
+            );
+        });
+
+        parser.registerCommand("report-roles", "Generate role report", (scanner, system) -> {
+            System.out.println("\nGenerating role report...");
+
+            String report = ReportGenerator.generateRoleReport(
+                    system.getRoleManager(),
+                    system.getAssignmentManager()
+            );
+
+            System.out.println(report);
+
+            ReportGenerator.exportToFile(
+                    report,
+                    "role_report.txt"
+            );
+        });
+
+        parser.registerCommand("report-matrix", "Generate permission matrix", (scanner, system) -> {
+            System.out.println("\nGenerating permission matrix...");
+
+            String report = ReportGenerator.generatePermissionMatrix(
+                    system.getUserManager(),
+                    system.getAssignmentManager()
+            );
+
+            System.out.println(report);
+
+            ReportGenerator.exportToFile(
+                    report,
+                    "permission_matrix.txt"
+            );
+        });
     }
 
     // USER COMMANDS
