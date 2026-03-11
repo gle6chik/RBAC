@@ -2,17 +2,16 @@ package assignment;
 
 import model.Role;
 import model.User;
+import utils.DateUtils;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 
 public class TemporaryAssignment extends AbstractRoleAssignment {
     String expiresAt;
     boolean autoRenew;
-
-    private static DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public TemporaryAssignment(User user,
                                Role role,
@@ -26,9 +25,8 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
 
     @Override
     public boolean isActive() {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiry = LocalDateTime.parse(expiresAt, FORMATTER);
-        return now.isBefore(expiry);
+        String now = DateUtils.getCurrentDateTime();
+        return DateUtils.isBefore(now, expiresAt);
     }
 
     @Override
@@ -45,18 +43,19 @@ public class TemporaryAssignment extends AbstractRoleAssignment {
     }
 
     public String getTimeRemaining() {
-        if (!isActive()) {
-            return "Expired";
-        }
-
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime expiry = LocalDateTime.parse(expiresAt, FORMATTER);
-
-        long days = ChronoUnit.DAYS.between(now, expiry);
-        long hours = ChronoUnit.HOURS.between(now, expiry) % 24;
-        long minutes = ChronoUnit.MINUTES.between(now, expiry) % 60;
-
-        return String.format("%d days, %d hours, %d minutes", days, hours, minutes);
+        return "s";
+//        if (!isActive()) {
+//            return "Expired";
+//        }
+//
+//        LocalDateTime now = LocalDateTime.now();
+//        LocalDateTime expiry = LocalDateTime.parse(expiresAt, FORMATTER);
+//
+//        long days = ChronoUnit.DAYS.between(now, expiry);
+//        long hours = ChronoUnit.HOURS.between(now, expiry) % 24;
+//        long minutes = ChronoUnit.MINUTES.between(now, expiry) % 60;
+//
+//        return String.format("%d days, %d hours, %d minutes", days, hours, minutes);
     }
 
     public String getExpiresAt() {
