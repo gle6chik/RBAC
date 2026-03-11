@@ -1,5 +1,7 @@
 package core;
 
+// СДЕЛАТЬ: использование класса ValidationUtils
+
 import model.*;
 import assignment.*;
 import filters.*;
