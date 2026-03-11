@@ -677,15 +677,24 @@ public class CommandRegistry {
     }
 
     private static void printUserTable(List<User> users) {
-        System.out.printf("%-15s | %-25s | %-25s%n", "Username", "Full Name", "Email");
-        System.out.println("-".repeat(70));
-        users.forEach(u -> System.out.printf("%-15s | %-25s | %-25s%n", u.username(), u.fullName(), u.email()));
+        String[] headers = {"Username", "Full Name", "Email"};
+        List<String[]> rows = users.stream()
+                .map(u -> new String[]{u.username(), u.fullName(), u.email()})
+                .collect(Collectors.toList());
+        System.out.print(FormatUtils.formatTable(headers, rows));
     }
 
     private static void printAssignmentTable(List<RoleAssignment> list) {
-        System.out.printf("%-15s | %-15s | %-10s | %-10s | %s%n", "User", "Role", "Type", "Status", "Assigned At");
-        System.out.println("-".repeat(85));
-        list.forEach(a -> System.out.printf("%-15s | %-15s | %-10s | %-10s | %s%n",
-                a.user().username(), a.role().getName(), a.assignmentType(), a.isActive() ? "ACTIVE" : "INACTIVE", a.metadata().assignedAt()));
+        String[] headers = {"User", "Role", "Type", "Status", "Assigned At"};
+        List<String[]> rows = list.stream()
+                .map(a -> new String[]{
+                        a.user().username(),
+                        a.role().getName(),
+                        a.assignmentType(),
+                        a.isActive() ? "ACTIVE" : "INACTIVE",
+                        a.metadata().assignedAt()
+                })
+                .collect(Collectors.toList());
+        System.out.print(FormatUtils.formatTable(headers, rows));
     }
 }
