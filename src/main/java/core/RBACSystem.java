@@ -5,6 +5,7 @@ import model.*;
 import assignment.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import utils.AuditLog;
 
 public class RBACSystem {
     private UserManager userManager;
@@ -12,12 +13,17 @@ public class RBACSystem {
     private AssignmentManager assignmentManager;
     private String currentUser;
 
+    private AuditLog auditLog;
+
+    public AuditLog getAuditLog() { return auditLog; }
+
     public RBACSystem() {
         this.userManager = new UserManager();
         this.roleManager = new RoleManager();
         this.assignmentManager = new AssignmentManager(userManager, roleManager);
         this.roleManager.setAssignmentManager(assignmentManager);
         this.currentUser = "system";
+        this.auditLog = new AuditLog();
     }
 
     public UserManager getUserManager() { return userManager; }

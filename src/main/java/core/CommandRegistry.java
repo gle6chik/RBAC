@@ -6,6 +6,7 @@ import model.*;
 import assignment.*;
 import filters.*;
 import managers.*;
+import utils.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -44,6 +45,15 @@ public class CommandRegistry {
 
                 User newUser = User.validate(username, fullName, email);
                 system.getUserManager().add(newUser);
+
+                // Логирование
+                system.getAuditLog().log(
+                        "USER_CREATE",
+                        system.getCurrentUser(),
+                        username,
+                        String.format("Full name: %s, Email: %s", fullName, email)
+                );
+
                 System.out.println("User created successfully!");
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
@@ -115,6 +125,15 @@ public class CommandRegistry {
                     var userAssignments = system.getAssignmentManager().findByFilter(AssignmentFilters.byUsername(username));
                     userAssignments.forEach(a -> system.getAssignmentManager().remove(a));
                     system.getUserManager().remove(user);
+
+                    // Логирование
+                    system.getAuditLog().log(
+                            "USER_DELETE",
+                            system.getCurrentUser(),
+                            username,
+                            "User and all assignments deleted"
+                    );
+
                     System.out.println("User and all their assignments deleted.");
                 }
             }, () -> System.out.println("User not found."));
@@ -141,6 +160,15 @@ public class CommandRegistry {
             String desc = scanner.nextLine().trim();
             Role role = new Role(name, desc);
             system.getRoleManager().add(role);
+
+            // Логирование
+            system.getAuditLog().log(
+                    "ROLE_CREATE",
+                    system.getCurrentUser(),
+                    name,
+                    "Description: " + desc
+            );
+
             System.out.println("Role created. Now add permissions.");
             addPermissionsLoop(scanner, role);
         });
@@ -176,6 +204,15 @@ public class CommandRegistry {
                 if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
                     try {
                         system.getRoleManager().remove(role);
+
+                        // Логирование
+                        system.getAuditLog().log(
+                                "ROLE_DELETE",
+                                system.getCurrentUser(),
+                                name,
+                                "Role deleted from system"
+                        );
+
                         System.out.println("Role deleted.");
                     } catch (Exception e) { System.out.println("Error: " + e.getMessage()); }
                 }
@@ -280,13 +317,25 @@ public class CommandRegistry {
                 String reason = scanner.nextLine().trim();
                 AssignmentMetadata meta = AssignmentMetadata.now(system.getCurrentUser(), reason);
 
+                String details;
                 if (type.equals("temporary")) {
                     System.out.print("Expiration (yyyy-MM-dd HH:mm): ");
                     String date = scanner.nextLine().trim();
                     system.getAssignmentManager().add(new TemporaryAssignment(user, role, meta, date, false));
+                    details = String.format("Type: TEMPORARY, Expires: %s, Reason: %s", date, reason);
                 } else {
                     system.getAssignmentManager().add(new PermanentAssignment(user, role, meta));
+                    details = String.format("Type: PERMANENT, Reason: %s", reason);
                 }
+
+                // Логирование
+                system.getAuditLog().log(
+                        "ASSIGNMENT_CREATE",
+                        system.getCurrentUser(),
+                        String.format("%s -> %s", username, roleName),
+                        details
+                );
+
                 System.out.println("Role assigned.");
             } catch (Exception e) { System.out.println("Assignment failed: " + e.getMessage()); }
         });
@@ -308,7 +357,17 @@ public class CommandRegistry {
             System.out.print("Select assignment number to revoke: ");
             try {
                 int idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
+                RoleAssignment assignment = assignments.get(idx);
                 system.getAssignmentManager().revokeAssignment(assignments.get(idx).assignmentId());
+
+                // Логирование
+                system.getAuditLog().log(
+                        "ASSIGNMENT_REVOKE",
+                        system.getCurrentUser(),
+                        String.format("%s -> %s", username, assignment.role().getName()),
+                        String.format("Type: %s", assignment.assignmentType())
+                );
+
                 System.out.println("Role revoked.");
             } catch (Exception e) { System.out.println("Revoke failed: " + e.getMessage()); }
         });
@@ -487,6 +546,7 @@ public class CommandRegistry {
             System.out.print("Confirm exit? (yes/no): ");
             if (scanner.nextLine().trim().equalsIgnoreCase("yes")) System.exit(0);
         });
+        parser.registerCommand("audit-log", "Show ausit log", (scanner, system) -> system.getAuditLog().printLog());
     }
 
     // HELPERS
