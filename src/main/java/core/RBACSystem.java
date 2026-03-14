@@ -6,6 +6,7 @@ import assignment.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import utils.AuditLog;
+import utils.FormatUtils;
 
 public class RBACSystem {
     private UserManager userManager;
@@ -94,9 +95,7 @@ public class RBACSystem {
 
     public String generateStatistics() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n" + "=".repeat(50) + "\n");
-        sb.append("SYSTEM STATISTICS\n");
-        sb.append("=".repeat(50) + "\n");
+        sb.append(FormatUtils.formatHeader("SYSTEM STATISTICS"));
 
         int userCount = userManager.count();
         int roleCount = roleManager.count();
@@ -128,8 +127,7 @@ public class RBACSystem {
                 .limit(3)
                 .forEach(entry -> sb.append(String.format(" - %s: %d assignments\n", entry.getKey(), entry.getValue())));
 
-        sb.append("=".repeat(50) + "\n");
-        return sb.toString();
+        return FormatUtils.formatBox(sb.toString());
     }
 
     public void clearScreen() {

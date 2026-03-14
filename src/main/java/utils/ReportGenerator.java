@@ -11,15 +11,10 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class ReportGenerator {
-    private static String SEPARATOR = "=".repeat(80);
-    private static String LINE = "-".repeat(80);
-
     public static String generateUserReport(UserManager userManager, AssignmentManager assignmentManager) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(SEPARATOR).append("\n");
-        sb.append("USER REPORT\n");
-        sb.append(SEPARATOR).append("\n\n");
+        sb.append(FormatUtils.formatHeader("USER REPORT"));
 
         List<User> users = userManager.findAll();
 
@@ -31,13 +26,11 @@ public class ReportGenerator {
         sb.append(String.format("Total users: %d\n\n", users.size()));
 
         for (User user : users) {
-            sb.append(formatUserSection(user, assignmentManager));
-            sb.append(LINE).append("\n");
+            // Каждый пользователь в своей рамке
+            sb.append(FormatUtils.formatBox(formatUserSection(user, assignmentManager)));
         }
 
-        sb.append(SEPARATOR).append("\n");
-        sb.append("END OF USER REPORT\n");
-        sb.append(SEPARATOR).append("\n");
+        sb.append(FormatUtils.formatHeader("END OF USER REPORT"));
 
         return sb.toString();
     }
@@ -50,7 +43,7 @@ public class ReportGenerator {
         sb.append(String.format("Full Name: %s\n", user.fullName()));
         sb.append(String.format("Email: %s\n", user.email()));
 
-        // Получаем назначения пользователя
+        // Назначения пользователя
         List<RoleAssignment> assignments = assignmentManager.findByFilter(
                 filters.AssignmentFilters.byUsername(user.username())
         );
@@ -96,16 +89,13 @@ public class ReportGenerator {
                     });
         }
 
-        sb.append("\n");
         return sb.toString();
     }
 
     public static String generateRoleReport(RoleManager roleManager, AssignmentManager assignmentManager) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(SEPARATOR).append("\n");
-        sb.append("ROLE REPORT\n");
-        sb.append(SEPARATOR).append("\n\n");
+        sb.append(FormatUtils.formatHeader("ROLE REPORT"));
 
         List<Role> roles = roleManager.findAll();
 
@@ -140,23 +130,20 @@ public class ReportGenerator {
             activeUserCountByRole.put(role, activeUsers);
         }
 
-        // Сортируем роли по количеству пользователей
         List<Role> sortedRoles = roles.stream()
                 .sorted((r1, r2) -> Long.compare(
                         userCountByRole.get(r2), userCountByRole.get(r1)))
                 .collect(Collectors.toList());
 
         for (Role role : sortedRoles) {
-            sb.append(formatRoleSection(role,
+            // Каждая роль в своей рамке
+            sb.append(FormatUtils.formatBox(formatRoleSection(role,
                     userCountByRole.get(role),
                     activeUserCountByRole.get(role),
-                    assignmentManager));
-            sb.append(LINE).append("\n");
+                    assignmentManager)));
         }
 
-        sb.append(SEPARATOR).append("\n");
-        sb.append("END OF ROLE REPORT\n");
-        sb.append(SEPARATOR).append("\n");
+        sb.append(FormatUtils.formatHeader("END OF ROLE REPORT"));
 
         return sb.toString();
     }
@@ -194,7 +181,7 @@ public class ReportGenerator {
         if (!assignments.isEmpty()) {
             sb.append("\nUsers with this role:\n");
 
-            // Группируем по статусу
+            // Группировка по статусу
             Map<Boolean, List<RoleAssignment>> byStatus = assignments.stream()
                     .collect(Collectors.groupingBy(RoleAssignment::isActive));
 
@@ -223,7 +210,6 @@ public class ReportGenerator {
             }
         }
 
-        sb.append("\n");
         return sb.toString();
     }
 
@@ -231,9 +217,7 @@ public class ReportGenerator {
                                                   AssignmentManager assignmentManager) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append(SEPARATOR).append("\n");
-        sb.append("PERMISSION MATRIX\n");
-        sb.append(SEPARATOR).append("\n\n");
+        sb.append(FormatUtils.formatHeader("PERMISSION MATRIX"));
 
         List<User> users = userManager.findAll();
 
@@ -242,7 +226,7 @@ public class ReportGenerator {
             return sb.toString();
         }
 
-        // Собираем все уникальные ресурсы
+        // Все уникальные ресурсы
         Set<String> allResources = new TreeSet<>();
         for (User user : users) {
             Set<Permission> perms = assignmentManager.getUserPermissions(user);
@@ -258,111 +242,67 @@ public class ReportGenerator {
 
         List<String> resources = new ArrayList<>(allResources);
 
-        // Заголовок таблицы
-        sb.append(formatMatrixHeader(resources));
-
-        // Строки для каждого пользователя
-        for (User user : users) {
-            sb.append(formatMatrixRow(user, resources, assignmentManager));
-        }
-
-        sb.append(formatMatrixFooter(resources));
-
-        // Легенда
-        sb.append("\nLEGEND:\n");
-        sb.append("  R - READ\n");
-        sb.append("  W - WRITE\n");
-        sb.append("  D - DELETE\n");
-        sb.append("  * - multiple permissions\n");
-
-        sb.append(SEPARATOR).append("\n");
-
-        return sb.toString();
-    }
-
-    private static String formatMatrixHeader(List<String> resources) {
-        StringBuilder sb = new StringBuilder();
-
-        // Верхняя граница
-        sb.append("+");
-        sb.append("-".repeat(20)); // для колонки пользователя
-        sb.append("+");
-
-        for (String resource : resources) {
-            sb.append("-".repeat(15));
-            sb.append("+");
-        }
-        sb.append("\n");
-
         // Заголовки
-        sb.append(String.format("| %-18s |", "Username"));
-        for (String resource : resources) {
-            String shortResource = resource.length() > 13
-                    ? resource.substring(0, 10) + "..."
-                    : resource;
-            sb.append(String.format(" %-13s |", shortResource));
+        String[] headers = new String[resources.size() + 1];
+        headers[0] = "Username";
+        for (int i = 0; i < resources.size(); i++) {
+            headers[i + 1] = resources.get(i);
         }
-        sb.append("\n");
 
-        // Разделитель
-        sb.append("+");
-        sb.append("-".repeat(20));
-        sb.append("+");
-        for (String resource : resources) {
-            sb.append("-".repeat(15));
-            sb.append("+");
-        }
-        sb.append("\n");
+        // Строки данных
+        List<String[]> rows = new ArrayList<>();
+        for (User user : users) {
+            String[] row = new String[resources.size() + 1];
+            row[0] = user.username();
 
-        return sb.toString();
-    }
+            Set<Permission> userPerms = assignmentManager.getUserPermissions(user);
 
-    private static String formatMatrixRow(User user, List<String> resources,
-                                          AssignmentManager assignmentManager) {
-        StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < resources.size(); i++) {
+                String resource = resources.get(i);
+                Set<String> permsForResource = userPerms.stream()
+                        .filter(p -> p.resource().equals(resource))
+                        .map(Permission::name)
+                        .collect(Collectors.toSet());
 
-        sb.append(String.format("| %-18s |", user.username()));
-
-        Set<Permission> userPerms = assignmentManager.getUserPermissions(user);
-
-        for (String resource : resources) {
-            // Получаем все права пользователя на этот ресурс
-            Set<String> permsForResource = userPerms.stream()
-                    .filter(p -> p.resource().equals(resource))
-                    .map(Permission::name)
-                    .collect(Collectors.toSet());
-
-            String cell;
-            if (permsForResource.isEmpty()) {
-                cell = " ".repeat(13);
-            } else if (permsForResource.size() == 1) {
-                String perm = permsForResource.iterator().next();
-                cell = String.format(" %-12s ", perm.substring(0, Math.min(perm.length(), 12)));
-            } else {
-                cell = String.format(" %-12s ", "*" + permsForResource.size());
+                if (permsForResource.isEmpty()) {
+                    row[i + 1] = "";
+                } else {
+                    String abbr = permsForResource.stream()
+                            .map(perm -> getPermissionAbbreviation(perm))
+                            .sorted((a, b) -> {
+                                int p1 = getPriority(a);
+                                int p2 = getPriority(b);
+                                if (p1 != p2) return Integer.compare(p1, p2);
+                                return a.compareTo(b);
+                            })
+                            .collect(Collectors.joining());
+                    row[i + 1] = abbr;
+                }
             }
-
-            sb.append(cell).append("|");
+            rows.add(row);
         }
 
-        sb.append("\n");
+        sb.append(FormatUtils.formatTable(headers, rows));
+
         return sb.toString();
     }
 
-    private static String formatMatrixFooter(List<String> resources) {
-        StringBuilder sb = new StringBuilder();
-
-        sb.append("+");
-        sb.append("-".repeat(20));
-        sb.append("+");
-
-        for (String resource : resources) {
-            sb.append("-".repeat(15));
-            sb.append("+");
+    private static String getPermissionAbbreviation(String permName) {
+        switch (permName.toUpperCase()) {
+            case "READ": return "R";
+            case "WRITE": return "W";
+            case "DELETE": return "D";
+            default: return permName.substring(0, 1);
         }
-        sb.append("\n");
+    }
 
-        return sb.toString();
+    private static int getPriority(String abbr) {
+        switch (abbr) {
+            case "R": return 1;
+            case "W": return 2;
+            case "D": return 3;
+            default: return 4;
+        }
     }
 
     public static void exportToFile(String report, String filename) {

@@ -62,7 +62,7 @@ public class ConsoleUtils {
 
         System.out.println(message);
 
-        // Выводим опции с номерами
+        // Вывод опций с номерами
         for (int i = 0; i < options.size(); i++) {
             T option = options.get(i);
             String optionStr = option.toString();
