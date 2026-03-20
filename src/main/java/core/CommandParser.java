@@ -2,6 +2,7 @@ package core;
 
 import java.awt.*;
 import java.util.*;
+import utils.FormatUtils;
 
 public class CommandParser {
     private Map<String, Command> commands = new LinkedHashMap<>();
@@ -27,15 +28,14 @@ public class CommandParser {
     }
 
     public void printHelp() {
-        System.out.println("\n" + "=".repeat(50));
-        System.out.println("AVAILABLE COMMANDS");
-        System.out.println("=".repeat(50));
+        StringBuilder helpContent = new StringBuilder();
 
         commandDescriptions.entrySet().stream()
                 .sorted(Map.Entry.comparingByKey())
-                .forEach(e -> System.out.printf("  %-20s - %s\n", e.getKey(), e.getValue()));
+                .forEach(e -> helpContent.append(String.format("  %-20s - %s\n", e.getKey(), e.getValue())));
 
-        System.out.println("=".repeat(50) + "\n");
+        System.out.println(FormatUtils.formatHeader("AVAILABLE COMMANDS"));
+        System.out.println(FormatUtils.formatBox(helpContent.toString()));
     }
 
     public void parseAndExecute(String input, Scanner scanner, RBACSystem system) {

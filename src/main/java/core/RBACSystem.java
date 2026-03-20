@@ -5,6 +5,8 @@ import model.*;
 import assignment.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import utils.AuditLog;
+import utils.FormatUtils;
 
 public class RBACSystem {
     private UserManager userManager;
@@ -12,12 +14,17 @@ public class RBACSystem {
     private AssignmentManager assignmentManager;
     private String currentUser;
 
+    private AuditLog auditLog;
+
+    public AuditLog getAuditLog() { return auditLog; }
+
     public RBACSystem() {
         this.userManager = new UserManager();
         this.roleManager = new RoleManager();
         this.assignmentManager = new AssignmentManager(userManager, roleManager);
         this.roleManager.setAssignmentManager(assignmentManager);
         this.currentUser = "system";
+        this.auditLog = new AuditLog();
     }
 
     public UserManager getUserManager() { return userManager; }
@@ -88,9 +95,7 @@ public class RBACSystem {
 
     public String generateStatistics() {
         StringBuilder sb = new StringBuilder();
-        sb.append("\n" + "=".repeat(50) + "\n");
-        sb.append("SYSTEM STATISTICS\n");
-        sb.append("=".repeat(50) + "\n");
+        sb.append(FormatUtils.formatHeader("SYSTEM STATISTICS"));
 
         int userCount = userManager.count();
         int roleCount = roleManager.count();
@@ -122,8 +127,7 @@ public class RBACSystem {
                 .limit(3)
                 .forEach(entry -> sb.append(String.format(" - %s: %d assignments\n", entry.getKey(), entry.getValue())));
 
-        sb.append("=".repeat(50) + "\n");
-        return sb.toString();
+        return FormatUtils.formatBox(sb.toString());
     }
 
     public void clearScreen() {

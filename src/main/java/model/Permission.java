@@ -1,14 +1,14 @@
 package model;
 
+import utils.ValidationUtils;
+
 public record Permission(String name, String resource, String description) {
     public Permission {
         // Валидация
-        if (name == null || name.trim().isEmpty())
-            throw new IllegalArgumentException("Permission name cannot be empty.");
-        if (resource == null || resource.trim().isEmpty())
-            throw new IllegalArgumentException("Resource cannot be empty.");
-        if (description == null || description.trim().isEmpty())
-            throw new IllegalArgumentException("Description cannot be empty.");
+        ValidationUtils.requireNonEmpty(name, "Permission name");
+        ValidationUtils.requireNonEmpty(resource, "Resource");
+        ValidationUtils.requireNonEmpty(description, "Description");
+
         if (name.contains(" "))
             throw new IllegalArgumentException("Permission name cannot contain spaces.");
 

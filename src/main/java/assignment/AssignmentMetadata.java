@@ -1,14 +1,12 @@
 package assignment;
 
-import java.time.LocalDateTime;
+import utils.DateUtils;
+
 import java.time.format.DateTimeFormatter;
 
 public record AssignmentMetadata(String assignedBy, String assignedAt, String reason) {
-    private static DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
-
     public static AssignmentMetadata now(String assignedBy, String reason) {
-        String now = LocalDateTime.now().format(FORMATTER);
+        String now = DateUtils.getCurrentDateTime();
         return new AssignmentMetadata(assignedBy, now, reason);
     }
 

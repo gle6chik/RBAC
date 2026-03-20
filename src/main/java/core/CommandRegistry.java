@@ -4,6 +4,7 @@ import model.*;
 import assignment.*;
 import filters.*;
 import managers.*;
+import utils.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -15,6 +16,66 @@ public class CommandRegistry {
         registerAssignmentCommands(parser);
         registerPermissionCommands(parser);
         registerUtilityCommands(parser);
+        registerReportCommands(parser);
+    }
+
+    private static void registerReportCommands(CommandParser parser) {
+        parser.registerCommand("report-users", "Generate user report", (scanner, system) -> {
+            System.out.println("\nGenerating user report...");
+
+            String report = ReportGenerator.generateUserReport(
+                    system.getUserManager(),
+                    system.getAssignmentManager()
+            );
+
+            System.out.println(report);
+
+            if (ConsoleUtils.promptYesNo(scanner, "Save report to file?")) {
+                String filename = ConsoleUtils.promptString(scanner, "Enter filename [user_report.txt]: ", false);
+                if (filename.isEmpty()) {
+                    filename = "user_report.txt";
+                }
+                ReportGenerator.exportToFile(report, filename);
+            }
+        });
+
+        parser.registerCommand("report-roles", "Generate role report", (scanner, system) -> {
+            System.out.println("\nGenerating role report...");
+
+            String report = ReportGenerator.generateRoleReport(
+                    system.getRoleManager(),
+                    system.getAssignmentManager()
+            );
+
+            System.out.println(report);
+
+            if (ConsoleUtils.promptYesNo(scanner, "Save report to file?")) {
+                String filename = ConsoleUtils.promptString(scanner, "Enter filename [role_report.txt]: ", false);
+                if (filename.isEmpty()) {
+                    filename = "role_report.txt";
+                }
+                ReportGenerator.exportToFile(report, filename);
+            }
+        });
+
+        parser.registerCommand("report-matrix", "Generate permission matrix", (scanner, system) -> {
+            System.out.println("\nGenerating permission matrix...");
+
+            String report = ReportGenerator.generatePermissionMatrix(
+                    system.getUserManager(),
+                    system.getAssignmentManager()
+            );
+
+            System.out.println(report);
+
+            if (ConsoleUtils.promptYesNo(scanner, "Save matrix to file?")) {
+                String filename = ConsoleUtils.promptString(scanner, "Enter filename [permission_matrix.txt]: ", false);
+                if (filename.isEmpty()) {
+                    filename = "permission_matrix.txt";
+                }
+                ReportGenerator.exportToFile(report, filename);
+            }
+        });
     }
 
     // USER COMMANDS
@@ -22,8 +83,8 @@ public class CommandRegistry {
         parser.registerCommand("user-list", "List all users with optional filters", (scanner, system) -> {
             UserManager um = system.getUserManager();
             List<User> users;
-            System.out.print("Apply filters? (yes/no): ");
-            if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+
+            if (ConsoleUtils.promptYesNo(scanner, "Apply filters?")) {
                 users = searchUsersLogic(scanner, um);
             } else {
                 users = um.findAll();
@@ -33,27 +94,32 @@ public class CommandRegistry {
 
         parser.registerCommand("user-create", "Create a new user", (scanner, system) -> {
             try {
-                System.out.print("Enter username: ");
-                String username = scanner.nextLine().trim();
-                System.out.print("Enter full name: ");
-                String fullName = scanner.nextLine().trim();
-                System.out.print("Enter email: ");
-                String email = scanner.nextLine().trim();
+                String username = ConsoleUtils.promptString(scanner, "Enter username: ", true);
+                String fullName = ConsoleUtils.promptString(scanner, "Enter full name: ", true);
+                String email = ConsoleUtils.promptString(scanner, "Enter email: ", true);
 
                 User newUser = User.validate(username, fullName, email);
                 system.getUserManager().add(newUser);
-                System.out.println("User created successfully!");
+
+                system.getAuditLog().log(
+                        "USER_CREATE",
+                        system.getCurrentUser(),
+                        username,
+                        String.format("Full name: %s, Email: %s", fullName, email)
+                );
+
+                ConsoleUtils.printSuccess("User created successfully!");
             } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
+                ConsoleUtils.printError(e.getMessage());
             }
         });
 
         parser.registerCommand("user-view", "View detailed user info", (scanner, system) -> {
-            System.out.print("Enter username: ");
-            String username = scanner.nextLine().trim();
+            String username = ConsoleUtils.promptString(scanner, "Enter username: ", true);
 
             system.getUserManager().findByUsername(username).ifPresentOrElse(user -> {
-                System.out.println(user.format());
+                // Информация о пользователе в рамке
+                System.out.println(FormatUtils.formatBox(user.format()));
 
                 var assignments = system.getAssignmentManager().findByFilter(
                         filters.AssignmentFilters.byUsername(username)
@@ -63,59 +129,77 @@ public class CommandRegistry {
                 if (assignments.isEmpty()) {
                     System.out.println("[No roles assigned to this user]");
                 } else {
+                    System.out.println("\nRoles assigned to " + username + ":");
+
                     assignments.forEach(a -> {
+                        StringBuilder roleInfo = new StringBuilder();
+
+                        // Заголовок роли
                         String type = a.assignmentType();
                         String status = a.isActive() ? "ACTIVE" : "INACTIVE/EXPIRED";
+                        roleInfo.append(String.format("Type: %s | Status: [%s]\n", type, status));
 
-                        System.out.printf("\nType: %s | Status: [%s]\n", type, status);
-
+                        // Информация о временном назначении
                         if (a instanceof TemporaryAssignment temp) {
-                            System.out.println("Validity: " + temp.summary());
+                            roleInfo.append("Validity: ").append(temp.summary()).append("\n");
                         }
 
-                        System.out.println(a.role().format());
-                        System.out.println("=".repeat(30));
+                        // Детальная информация о роли
+                        roleInfo.append(a.role().format());
+
+                        // Каждая роль в своей рамке
+                        System.out.println(FormatUtils.formatBox(roleInfo.toString()));
                     });
                 }
 
+                // Права пользователя в рамке
                 if (allPermissions.isEmpty()) {
-                    System.out.println("  [No active permissions found]");
+                    System.out.println(FormatUtils.formatBox("No active permissions found"));
                 } else {
-                    System.out.println("All permissions for this user:");
-                    allPermissions.forEach(p -> System.out.println("    - " + p.format()));
+                    StringBuilder permsInfo = new StringBuilder("All permissions for this user:\n\n");
+                    allPermissions.forEach(p -> permsInfo.append("  - ").append(p.format()).append("\n"));
+                    System.out.println(FormatUtils.formatBox(permsInfo.toString()));
                 }
-                System.out.println("=".repeat(60));
 
-            }, () -> System.out.println("Error: User '" + username + "' not found."));
+            }, () -> ConsoleUtils.printError("User '" + username + "' not found."));
         });
 
         parser.registerCommand("user-update", "Update user data", (scanner, system) -> {
-            System.out.print("Enter username to update: ");
-            String username = scanner.nextLine().trim();
+            // Заменяем прямые вызовы scanner на ConsoleUtils
+            String username = ConsoleUtils.promptString(scanner, "Enter username to update: ", true);
+
             try {
-                System.out.print("Enter new full name: ");
-                String name = scanner.nextLine().trim();
-                System.out.print("Enter new email: ");
-                String email = scanner.nextLine().trim();
+                String name = ConsoleUtils.promptString(scanner, "Enter new full name: ", true);
+                String email = ConsoleUtils.promptString(scanner, "Enter new email: ", true);
+
                 system.getUserManager().update(username, name, email);
-                System.out.println("User updated successfully.");
+                ConsoleUtils.printSuccess("User updated successfully.");
             } catch (Exception e) {
-                System.out.println("Update failed: " + e.getMessage());
+                ConsoleUtils.printError("Update failed: " + e.getMessage());
             }
         });
 
         parser.registerCommand("user-delete", "Delete a user and their assignments", (scanner, system) -> {
-            System.out.print("Enter username to delete: ");
-            String username = scanner.nextLine().trim();
+            // Заменяем прямой ввод на ConsoleUtils
+            String username = ConsoleUtils.promptString(scanner, "Enter username to delete: ", true);
+
             system.getUserManager().findByUsername(username).ifPresentOrElse(user -> {
-                System.out.print("Confirm deletion (type 'yes'): ");
-                if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+                // Заменяем прямой ввод на ConsoleUtils
+                if (ConsoleUtils.promptYesNo(scanner, "Confirm deletion")) {
                     var userAssignments = system.getAssignmentManager().findByFilter(AssignmentFilters.byUsername(username));
                     userAssignments.forEach(a -> system.getAssignmentManager().remove(a));
                     system.getUserManager().remove(user);
-                    System.out.println("User and all their assignments deleted.");
+
+                    system.getAuditLog().log(
+                            "USER_DELETE",
+                            system.getCurrentUser(),
+                            username,
+                            "User and all assignments deleted"
+                    );
+
+                    ConsoleUtils.printSuccess("User and all their assignments deleted.");
                 }
-            }, () -> System.out.println("User not found."));
+            }, () -> ConsoleUtils.printError("User not found."));
         });
 
         parser.registerCommand("user-search", "Search users by filters", (scanner, system) -> {
@@ -133,101 +217,139 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("role-create", "Create a new role", (scanner, system) -> {
-            System.out.print("Role name: ");
-            String name = scanner.nextLine().trim();
-            System.out.print("Description: ");
-            String desc = scanner.nextLine().trim();
-            Role role = new Role(name, desc);
-            system.getRoleManager().add(role);
-            System.out.println("Role created. Now add permissions.");
-            addPermissionsLoop(scanner, role);
+            // Заменяем прямые вызовы scanner на ConsoleUtils
+            String name = ConsoleUtils.promptString(scanner, "Role name: ", true);
+            String desc = ConsoleUtils.promptString(scanner, "Description: ", true);
+
+            try {
+                Role role = new Role(name, desc);
+                system.getRoleManager().add(role);
+
+                system.getAuditLog().log(
+                        "ROLE_CREATE",
+                        system.getCurrentUser(),
+                        name,
+                        "Description: " + desc
+                );
+
+                ConsoleUtils.printSuccess("Role created. Now add permissions.");
+                addPermissionsLoop(scanner, role);
+            } catch (Exception e) {
+                ConsoleUtils.printError(e.getMessage());
+            }
         });
 
         parser.registerCommand("role-view", "View role details", (scanner, system) -> {
-            System.out.print("Enter role name: ");
-            String name = scanner.nextLine().trim();
+            String name = ConsoleUtils.promptString(scanner, "Enter role name: ", true);
+
             system.getRoleManager().findByName(name).ifPresentOrElse(
-                    r -> System.out.println(r.format()),
-                    () -> System.out.println("Role not found."));
+                    r -> {
+                        String roleContent = r.format();
+                        System.out.println(FormatUtils.formatBox(roleContent));
+                    },
+                    () -> ConsoleUtils.printError("Role not found."));
         });
 
         parser.registerCommand("role-update", "Update role description", (scanner, system) -> {
-            System.out.print("Enter role name to update: ");
-            String name = scanner.nextLine().trim();
+            // Заменяем прямые вызовы scanner на ConsoleUtils
+            String name = ConsoleUtils.promptString(scanner, "Enter role name to update: ", true);
+
             system.getRoleManager().findByName(name).ifPresentOrElse(role -> {
-                System.out.print("Enter new description: ");
-                role.setDescription(scanner.nextLine().trim());
-                System.out.println("Role updated successfully.");
-            }, () -> System.out.println("Role not found."));
+                String desc = ConsoleUtils.promptString(scanner, "Enter new description: ", true);
+                role.setDescription(desc);
+                ConsoleUtils.printSuccess("Role updated successfully.");
+            }, () -> ConsoleUtils.printError("Role not found."));
         });
 
         parser.registerCommand("role-delete", "Delete a role", (scanner, system) -> {
-            System.out.print("Role name: ");
-            String name = scanner.nextLine().trim();
+            // Заменяем прямой ввод на ConsoleUtils
+            String name = ConsoleUtils.promptString(scanner, "Role name: ", true);
+
             system.getRoleManager().findByName(name).ifPresentOrElse(role -> {
                 if (system.getAssignmentManager().isRoleAssigned(role)) {
                     System.out.println("WARNING: Role is assigned to users:");
                     system.getAssignmentManager().findByFilter(AssignmentFilters.byRole(role))
                             .forEach(a -> System.out.println(" - " + a.user().username()));
                 }
-                System.out.print("Confirm deletion (type 'yes'): ");
-                if (scanner.nextLine().trim().equalsIgnoreCase("yes")) {
+
+                if (ConsoleUtils.promptYesNo(scanner, "Confirm deletion")) {
                     try {
                         system.getRoleManager().remove(role);
-                        System.out.println("Role deleted.");
-                    } catch (Exception e) { System.out.println("Error: " + e.getMessage()); }
+
+                        system.getAuditLog().log(
+                                "ROLE_DELETE",
+                                system.getCurrentUser(),
+                                name,
+                                "Role deleted from system"
+                        );
+
+                        ConsoleUtils.printSuccess("Role deleted.");
+                    } catch (Exception e) {
+                        ConsoleUtils.printError(e.getMessage());
+                    }
                 }
-            }, () -> System.out.println("Role not found."));
+            }, () -> ConsoleUtils.printError("Role not found."));
         });
 
         parser.registerCommand("role-add-permission", "Add permission to role", (scanner, system) -> {
-            System.out.print("Role name: ");
-            String rName = scanner.nextLine().trim();
+            String rName = ConsoleUtils.promptString(scanner, "Role name: ", true);
+
             try {
-                System.out.print("Permission name: ");
-                String pName = scanner.nextLine().trim();
-                System.out.print("Resource: ");
-                String res = scanner.nextLine().trim();
-                System.out.print("Description: ");
-                String desc = scanner.nextLine().trim();
+                String pName = ConsoleUtils.promptString(scanner, "Permission name: ", true);
+                String res = ConsoleUtils.promptString(scanner, "Resource: ", true);
+                String desc = ConsoleUtils.promptString(scanner, "Description: ", true);
+
                 system.getRoleManager().addPermissionToRole(rName, new Permission(pName, res, desc));
-                System.out.println("Permission added.");
-            } catch (Exception e) { System.out.println(e.getMessage()); }
+                ConsoleUtils.printSuccess("Permission added.");
+            } catch (Exception e) {
+                ConsoleUtils.printError(e.getMessage());
+            }
         });
 
         parser.registerCommand("role-remove-permission", "Remove permission from role", (scanner, system) -> {
-            System.out.print("Role name: ");
-            String rName = scanner.nextLine().trim();
+            String rName = ConsoleUtils.promptString(scanner, "Role name: ", true);
+
             system.getRoleManager().findByName(rName).ifPresentOrElse(role -> {
                 List<Permission> perms = new ArrayList<>(role.getPermissions());
-                for (int i = 0; i < perms.size(); i++) {
-                    System.out.println((i + 1) + ". " + perms.get(i).format());
+
+                if (perms.isEmpty()) {
+                    ConsoleUtils.printWarning("Role has no permissions to remove.");
+                    return;
                 }
-                System.out.print("Select permission number to remove: ");
+
+                Permission selected = ConsoleUtils.promptChoice(
+                        scanner,
+                        "Select permission to remove:",
+                        perms
+                );
+
                 try {
-                    int idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
-                    system.getRoleManager().removePermissionFromRole(rName, perms.get(idx));
-                    System.out.println("Permission removed.");
-                } catch (Exception e) { System.out.println("Error: " + e.getMessage()); }
-            }, () -> System.out.println("Role not found."));
+                    system.getRoleManager().removePermissionFromRole(rName, selected);
+                    ConsoleUtils.printSuccess("Permission removed.");
+                } catch (Exception e) {
+                    ConsoleUtils.printError(e.getMessage());
+                }
+
+            }, () -> ConsoleUtils.printError("Role not found."));
         });
 
         parser.registerCommand("role-search", "Search roles", (scanner, system) -> {
-            System.out.println("1. By name (contains)\n2. By permission name\n3. By min permissions count");
-            System.out.print("Select filter number: ");
-            String choice = scanner.nextLine().trim();
+            List<String> searchOptions = Arrays.asList(
+                    "By name (contains)",
+                    "By permission name",
+                    "By min permissions count"
+            );
 
-            List<Role> found = switch (choice) {
-                case "1" -> {
-                    System.out.print("Enter role name: ");
-                    String rName = scanner.nextLine().trim();
+            String choice = ConsoleUtils.promptChoice(scanner, "Select filter:", searchOptions);
+
+            List<Role> found = switch (searchOptions.indexOf(choice)) {
+                case 0 -> {
+                    String rName = ConsoleUtils.promptString(scanner, "Enter role name: ", true);
                     yield system.getRoleManager().findByFilter(RoleFilters.byNameContains(rName));
                 }
-                case "2" -> {
-                    System.out.print("Enter permission name: ");
-                    String pName = scanner.nextLine().trim();
-                    System.out.print("Enter resource (optional): ");
-                    String pRes = scanner.nextLine().trim();
+                case 1 -> {
+                    String pName = ConsoleUtils.promptString(scanner, "Enter permission name: ", true);
+                    String pRes = ConsoleUtils.promptString(scanner, "Enter resource (optional): ", false);
                     yield system.getRoleManager().findByFilter(role ->
                             role.getPermissions().stream().anyMatch(p ->
                                     p.name().equalsIgnoreCase(pName) &&
@@ -235,23 +357,15 @@ public class CommandRegistry {
                             )
                     );
                 }
-                case "3" -> {
-                    System.out.print("Enter minimum count: ");
-                    try {
-                        int min = Integer.parseInt(scanner.nextLine().trim());
-                        yield system.getRoleManager().findByFilter(RoleFilters.hasAtLeastNPermissions(min));
-                    } catch (NumberFormatException e) {
-                        yield new ArrayList<>();
-                    }
+                case 2 -> {
+                    int min = ConsoleUtils.promptInt(scanner, "Enter minimum count: ", 0, 100);
+                    yield system.getRoleManager().findByFilter(RoleFilters.hasAtLeastNPermissions(min));
                 }
-                default -> {
-                    System.out.println("Unknown filter. Showing all.");
-                    yield system.getRoleManager().findAll();
-                }
+                default -> system.getRoleManager().findAll();
             };
 
             if (found.isEmpty()) {
-                System.out.println("No roles found.");
+                ConsoleUtils.printWarning("No roles found.");
             } else {
                 found.forEach(r -> System.out.println(" - " + r.getName() + " (" + r.getPermissions().size() + " perms)"));
             }
@@ -262,53 +376,85 @@ public class CommandRegistry {
     private static void registerAssignmentCommands(CommandParser parser) {
         parser.registerCommand("assign-role", "Assign role to user", (scanner, system) -> {
             try {
-                System.out.print("Username: ");
-                String username = scanner.nextLine().trim();
-                User user = system.getUserManager().findByUsername(username).orElseThrow(() -> new Exception("User not found"));
+                String username = ConsoleUtils.promptString(scanner, "Username: ", true);
+                User user = system.getUserManager().findByUsername(username)
+                        .orElseThrow(() -> new Exception("User not found"));
 
-                System.out.println("Available roles:");
-                system.getRoleManager().findAll().forEach(r -> System.out.println(" - " + r.getName()));
-                System.out.print("Select role: ");
-                String roleName = scanner.nextLine().trim();
-                Role role = system.getRoleManager().findByName(roleName).orElseThrow(() -> new Exception("Role not found"));
+                List<Role> availableRoles = system.getRoleManager().findAll();
+                if (availableRoles.isEmpty()) {
+                    ConsoleUtils.printWarning("No roles available to assign.");
+                    return;
+                }
 
-                System.out.print("Type (permanent/temporary): ");
-                String type = scanner.nextLine().trim().toLowerCase();
-                System.out.print("Reason: ");
-                String reason = scanner.nextLine().trim();
+                Role role = ConsoleUtils.promptChoice(
+                        scanner,
+                        "Available roles:",
+                        availableRoles
+                );
+
+                String type = ConsoleUtils.promptString(scanner, "Type (permanent/temporary): ", true);
+                String reason = ConsoleUtils.promptString(scanner, "Reason: ", true);
                 AssignmentMetadata meta = AssignmentMetadata.now(system.getCurrentUser(), reason);
 
-                if (type.equals("temporary")) {
-                    System.out.print("Expiration (yyyy-MM-dd HH:mm): ");
-                    String date = scanner.nextLine().trim();
+                String details;
+                if (type.equalsIgnoreCase("temporary")) {
+                    String date = ConsoleUtils.promptString(scanner, "Expiration (yyyy-MM-dd HH:mm): ", true);
                     system.getAssignmentManager().add(new TemporaryAssignment(user, role, meta, date, false));
+                    details = String.format("Type: TEMPORARY, Expires: %s, Reason: %s", date, reason);
                 } else {
                     system.getAssignmentManager().add(new PermanentAssignment(user, role, meta));
+                    details = String.format("Type: PERMANENT, Reason: %s", reason);
                 }
-                System.out.println("Role assigned.");
-            } catch (Exception e) { System.out.println("Assignment failed: " + e.getMessage()); }
+
+                system.getAuditLog().log(
+                        "ASSIGNMENT_CREATE",
+                        system.getCurrentUser(),
+                        String.format("%s -> %s", username, role.getName()),
+                        details
+                );
+
+                ConsoleUtils.printSuccess("Role assigned.");
+            } catch (Exception e) {
+                ConsoleUtils.printError("Assignment failed: " + e.getMessage());
+            }
         });
 
         parser.registerCommand("revoke-role", "Revoke role from user", (scanner, system) -> {
-            System.out.print("Username: ");
-            String username = scanner.nextLine().trim();
-            var assignments = system.getAssignmentManager().findByFilter(AssignmentFilters.byUsername(username))
-                    .stream().filter(RoleAssignment::isActive).toList();
+            String username = ConsoleUtils.promptString(scanner, "Username: ", true);
+
+            var assignments = system.getAssignmentManager()
+                    .findByFilter(AssignmentFilters.byUsername(username))
+                    .stream()
+                    .filter(RoleAssignment::isActive)
+                    .collect(Collectors.toList());
 
             if (assignments.isEmpty()) {
-                System.out.println("No active assignments found.");
+                ConsoleUtils.printWarning("No active assignments found.");
                 return;
             }
 
-            for (int i = 0; i < assignments.size(); i++) {
-                System.out.printf("%d. Role: %s (%s)%n", i + 1, assignments.get(i).role().getName(), assignments.get(i).assignmentType());
+            RoleAssignment selected = ConsoleUtils.promptChoice(
+                    scanner,
+                    "Select assignment to revoke:",
+                    assignments
+            );
+
+            if (ConsoleUtils.promptYesNo(scanner, "Confirm revocation")) {
+                try {
+                    system.getAssignmentManager().revokeAssignment(selected.assignmentId());
+
+                    system.getAuditLog().log(
+                            "ASSIGNMENT_REVOKE",
+                            system.getCurrentUser(),
+                            String.format("%s -> %s", username, selected.role().getName()),
+                            String.format("Type: %s", selected.assignmentType())
+                    );
+
+                    ConsoleUtils.printSuccess("Role revoked.");
+                } catch (Exception e) {
+                    ConsoleUtils.printError("Revoke failed: " + e.getMessage());
+                }
             }
-            System.out.print("Select assignment number to revoke: ");
-            try {
-                int idx = Integer.parseInt(scanner.nextLine().trim()) - 1;
-                system.getAssignmentManager().revokeAssignment(assignments.get(idx).assignmentId());
-                System.out.println("Role revoked.");
-            } catch (Exception e) { System.out.println("Revoke failed: " + e.getMessage()); }
         });
 
         parser.registerCommand("assignment-list", "List all assignments", (scanner, system) -> {
@@ -316,17 +462,16 @@ public class CommandRegistry {
         });
 
         parser.registerCommand("assignment-list-user", "Assignments of user", (scanner, system) -> {
-            System.out.print("Username: ");
-            String name = scanner.nextLine().trim();
+            String name = ConsoleUtils.promptString(scanner, "Username: ", true);
             printAssignmentTable(system.getAssignmentManager().findByFilter(AssignmentFilters.byUsername(name)));
         });
 
         parser.registerCommand("assignment-list-role", "Users with specific role", (scanner, system) -> {
-            System.out.print("Enter role name: ");
-            String rName = scanner.nextLine().trim();
+            String rName = ConsoleUtils.promptString(scanner, "Enter role name: ", true);
+
             system.getRoleManager().findByName(rName).ifPresentOrElse(role -> {
                 printAssignmentTable(system.getAssignmentManager().findByFilter(AssignmentFilters.byRole(role)));
-            }, () -> System.out.println("Role not found."));
+            }, () -> ConsoleUtils.printError("Role not found."));
         });
 
         parser.registerCommand("assignment-active", "Show active assignments", (scanner, system) -> {
@@ -341,32 +486,28 @@ public class CommandRegistry {
                     .filter(a -> !a.isActive())
                     .toList();
 
-            System.out.println("\nEXPIRED TEMPORARY ASSIGNMENTS:");
-            System.out.printf("%-15s | %-15s | %-10s%n", "User", "Role", "Status");
-            System.out.println("-".repeat(50));
+            System.out.println(FormatUtils.formatHeader("EXPIRED TEMPORARY ASSIGNMENTS"));
 
             if (expiredAssignments.isEmpty()) {
-                System.out.println("No expired temporary assignments found.");
+                System.out.println(FormatUtils.formatBox("No expired temporary assignments found."));
             } else {
-                expiredAssignments.forEach(a -> {
-                    String username = a.user().username();
-                    String roleName = a.role().getName();
-                    String status = "EXPIRED";
+                String[] headers = {"User", "Role", "Status"};
 
-                    System.out.printf("%-15s | %-15s | %-10s%n",
-                            username,
-                            roleName,
-                            status);
-                });
+                List<String[]> rows = expiredAssignments.stream()
+                        .map(a -> new String[]{
+                                a.user().username(),
+                                a.role().getName(),
+                                "EXPIRED"
+                        })
+                        .collect(Collectors.toList());
+
+                System.out.print(FormatUtils.formatTable(headers, rows));
             }
         });
 
         parser.registerCommand("assignment-extend", "Extend temporary assignment", (scanner, system) -> {
-            System.out.print("Enter username: ");
-            String username = scanner.nextLine().trim();
-
-            System.out.print("Enter role name: ");
-            String roleName = scanner.nextLine().trim();
+            String username = ConsoleUtils.promptString(scanner, "Enter username: ", true);
+            String roleName = ConsoleUtils.promptString(scanner, "Enter role name: ", true);
 
             var userOpt = system.getUserManager().findByUsername(username);
             var roleOpt = system.getRoleManager().findByName(roleName);
@@ -379,61 +520,63 @@ public class CommandRegistry {
                         .findFirst();
 
                 if (assignment.isPresent()) {
-                    System.out.print("Enter new expiration date (yyyy-MM-dd HH:mm): ");
-                    String newDateStr = scanner.nextLine().trim();
+                    String newDateStr = ConsoleUtils.promptString(scanner, "Enter new expiration date (yyyy-MM-dd HH:mm): ", true);
 
                     try {
                         system.getAssignmentManager().extendTemporaryAssignment(assignment.get().assignmentId(), newDateStr);
 
-                        System.out.println("Success: Assignment extended. Status is now: " +
+                        ConsoleUtils.printSuccess("Assignment extended. Status is now: " +
                                 (assignment.get().isActive() ? "ACTIVE" : "STILL EXPIRED (check date)"));
                     } catch (Exception e) {
-                        System.out.println("Error: " + e.getMessage());
+                        ConsoleUtils.printError(e.getMessage());
                     }
                 } else {
-                    System.out.println("Error: No temporary assignment found for this user/role pair.");
+                    ConsoleUtils.printError("No temporary assignment found for this user/role pair.");
                 }
             } else {
-                System.out.println("Error: User or Role not found.");
+                ConsoleUtils.printError("User or Role not found.");
             }
         });
 
         parser.registerCommand("assignment-search", "Search assignments by filter", (scanner, system) -> {
-            System.out.println("\n1. By User\n2. By Role\n3. By Type (permanent/temporary)\n4. By Status (active/inactive)\n5. After Date\n6. Expiring before Date");
-            System.out.print("Select filter number: ");
-            String choice = scanner.nextLine().trim();
+            List<String> filterOptions = Arrays.asList(
+                    "By User",
+                    "By Role",
+                    "By Type (permanent/temporary)",
+                    "By Status (active/inactive)",
+                    "After Date",
+                    "Expiring before Date"
+            );
 
-            var filter = switch(choice) {
-                case "1" -> {
-                    System.out.print("Enter username: ");
-                    yield AssignmentFilters.byUsername(scanner.nextLine().trim());
+            String choice = ConsoleUtils.promptChoice(scanner, "Select filter:", filterOptions);
+
+            var filter = switch (filterOptions.indexOf(choice)) {
+                case 0 -> {
+                    String username = ConsoleUtils.promptString(scanner, "Enter username: ", true);
+                    yield AssignmentFilters.byUsername(username);
                 }
-                case "2" -> {
-                    System.out.print("Enter role name: ");
-                    yield AssignmentFilters.byRoleName(scanner.nextLine().trim());
+                case 1 -> {
+                    String roleName = ConsoleUtils.promptString(scanner, "Enter role name: ", true);
+                    yield AssignmentFilters.byRoleName(roleName);
                 }
-                case "3" -> {
-                    System.out.print("Enter type (PERMANENT/TEMPORARY): ");
-                    yield AssignmentFilters.byType(scanner.nextLine().trim().toUpperCase());
+                case 2 -> {
+                    String type = ConsoleUtils.promptString(scanner, "Enter type (PERMANENT/TEMPORARY): ", true);
+                    yield AssignmentFilters.byType(type.toUpperCase());
                 }
-                case "4" -> {
-                    System.out.print("Enter status (active/inactive): ");
-                    String status = scanner.nextLine().trim().toLowerCase();
-                    if (status.equals("inactive")) yield AssignmentFilters.inactiveOnly();
-                    yield AssignmentFilters.activeOnly(); // По умолчанию активные
-                }
-                case "5" -> {
-                    System.out.print("Enter start date (yyyy-MM-dd HH:mm): ");
-                    yield AssignmentFilters.assignedAfter(scanner.nextLine().trim());
-                }
-                case "6" -> {
-                    System.out.print("Enter end date (yyyy-MM-dd HH:mm): ");
-                    yield AssignmentFilters.expiringBefore(scanner.nextLine().trim());
-                }
-                default -> {
-                    System.out.println("Invalid choice. Showing active assignments.");
+                case 3 -> {
+                    String status = ConsoleUtils.promptString(scanner, "Enter status (active/inactive): ", true);
+                    if (status.equalsIgnoreCase("inactive")) yield AssignmentFilters.inactiveOnly();
                     yield AssignmentFilters.activeOnly();
                 }
+                case 4 -> {
+                    String date = ConsoleUtils.promptString(scanner, "Enter start date (yyyy-MM-dd HH:mm): ", true);
+                    yield AssignmentFilters.assignedAfter(date);
+                }
+                case 5 -> {
+                    String date = ConsoleUtils.promptString(scanner, "Enter end date (yyyy-MM-dd HH:mm): ", true);
+                    yield AssignmentFilters.expiringBefore(date);
+                }
+                default -> AssignmentFilters.activeOnly();
             };
 
             printAssignmentTable(system.getAssignmentManager().findByFilter(filter));
@@ -443,26 +586,42 @@ public class CommandRegistry {
     // PERMISSION COMMANDS
     private static void registerPermissionCommands(CommandParser parser) {
         parser.registerCommand("permissions-user", "User permissions by resource", (scanner, system) -> {
-            System.out.print("Username: ");
-            String username = scanner.nextLine().trim();
+            String username = ConsoleUtils.promptString(scanner, "Username: ", true);
+
             system.getUserManager().findByUsername(username).ifPresentOrElse(user -> {
                 var perms = system.getAssignmentManager().getUserPermissions(user);
-                perms.stream().collect(Collectors.groupingBy(Permission::resource))
-                        .forEach((res, pList) -> {
-                            System.out.println("Resource: " + res);
-                            pList.forEach(p -> System.out.println("  - " + p.name() + " (" + p.description() + ")"));
-                        });
-            }, () -> System.out.println("User not found."));
+
+                if (perms.isEmpty()) {
+                    System.out.println(FormatUtils.formatBox("No permissions found for user: " + username));
+                } else {
+                    Map<String, List<Permission>> byResource = perms.stream()
+                            .collect(Collectors.groupingBy(Permission::resource));
+
+                    System.out.println(FormatUtils.formatHeader("Permissions for " + username));
+
+                    byResource.forEach((resource, permissions) -> {
+                        StringBuilder resourceContent = new StringBuilder();
+                        resourceContent.append("Resource: ").append(resource).append("\n");
+                        resourceContent.append("-".repeat(resource.length() + 10)).append("\n");
+
+                        permissions.forEach(p ->
+                                resourceContent.append("  - ").append(p.name())
+                                        .append(": ").append(p.description())
+                                        .append("\n")
+                        );
+
+                        System.out.println(FormatUtils.formatBox(resourceContent.toString()));
+                    });
+                }
+            }, () -> ConsoleUtils.printError("User not found."));
         });
 
         parser.registerCommand("permissions-check", "Check specific permission", (scanner, system) -> {
-            System.out.print("Username: ");
-            String username = scanner.nextLine().trim();
+            String username = ConsoleUtils.promptString(scanner, "Username: ", true);
+
             system.getUserManager().findByUsername(username).ifPresentOrElse(user -> {
-                System.out.print("Permission name (READ): ");
-                String pName = scanner.nextLine().trim();
-                System.out.print("Resource (users): ");
-                String res = scanner.nextLine().trim();
+                String pName = ConsoleUtils.promptString(scanner, "Permission name (READ): ", true);
+                String res = ConsoleUtils.promptString(scanner, "Resource (users): ", true);
 
                 boolean has = system.getAssignmentManager().userHasPermission(user, pName, res);
                 System.out.println("Result: " + (has ? "GRANTED" : "DENIED"));
@@ -473,7 +632,7 @@ public class CommandRegistry {
                             .stream().filter(a -> a.isActive() && a.role().hasPermission(pName, res))
                             .forEach(a -> System.out.println(" - " + a.role().getName()));
                 }
-            }, () -> System.out.println("User not found."));
+            }, () -> ConsoleUtils.printError("User not found."));
         });
     }
 
@@ -482,52 +641,68 @@ public class CommandRegistry {
         parser.registerCommand("stats", "System statistics", (scanner, system) -> System.out.println(system.generateStatistics()));
         parser.registerCommand("clear", "Clear screen", (scanner, system) -> system.clearScreen());
         parser.registerCommand("exit", "Exit program", (scanner, system) -> {
-            System.out.print("Confirm exit? (yes/no): ");
-            if (scanner.nextLine().trim().equalsIgnoreCase("yes")) System.exit(0);
+            // Заменяем прямой ввод на ConsoleUtils
+            if (ConsoleUtils.promptYesNo(scanner, "Confirm exit")) {
+                System.exit(0);
+            }
         });
+        parser.registerCommand("audit-log", "Show audit log", (scanner, system) -> system.getAuditLog().printLog());
     }
 
     // HELPERS
     private static List<User> searchUsersLogic(Scanner scanner, UserManager um) {
-        System.out.println("1. Username (contains)\n2. Email (contains)\n3. Email Domain\n4. Full Name (contains)");
-        String choice = scanner.nextLine().trim();
-        System.out.print("Enter search string: ");
-        String query = scanner.nextLine().trim();
-        return switch (choice) {
-            case "1" -> um.findByFilter(UserFilters.byUsernameContains(query));
-            case "2" -> um.findByFilter(UserFilters.byEmail(query));
-            case "3" -> um.findByFilter(UserFilters.byEmailDomain(query));
-            case "4" -> um.findByFilter(UserFilters.byFullNameContains(query));
+        List<String> searchOptions = Arrays.asList(
+                "Username (contains)",
+                "Email (contains)",
+                "Email Domain",
+                "Full Name (contains)"
+        );
+
+        String choice = ConsoleUtils.promptChoice(scanner, "Select search type:", searchOptions);
+        String query = ConsoleUtils.promptString(scanner, "Enter search string: ", true);
+
+        return switch (searchOptions.indexOf(choice)) {
+            case 0 -> um.findByFilter(UserFilters.byUsernameContains(query));
+            case 1 -> um.findByFilter(UserFilters.byEmail(query));
+            case 2 -> um.findByFilter(UserFilters.byEmailDomain(query));
+            case 3 -> um.findByFilter(UserFilters.byFullNameContains(query));
             default -> um.findAll();
         };
     }
 
     private static void addPermissionsLoop(Scanner scanner, Role role) {
-        while (true) {
-            System.out.print("Add permission to this role? (yes/no): ");
-            if (!scanner.nextLine().trim().equalsIgnoreCase("yes")) break;
+        while (ConsoleUtils.promptYesNo(scanner, "Add permission to this role?")) {
             try {
-                System.out.print("Permission name: ");
-                String pName = scanner.nextLine().trim();
-                System.out.print("Resource: ");
-                String res = scanner.nextLine().trim();
-                System.out.print("Description: ");
-                String pDesc = scanner.nextLine().trim();
+                String pName = ConsoleUtils.promptString(scanner, "Permission name: ", true);
+                String res = ConsoleUtils.promptString(scanner, "Resource: ", true);
+                String pDesc = ConsoleUtils.promptString(scanner, "Description: ", true);
                 role.addPermission(new Permission(pName, res, pDesc));
-            } catch (Exception e) { System.out.println("Error: " + e.getMessage()); }
+                ConsoleUtils.printSuccess("Permission added.");
+            } catch (Exception e) {
+                ConsoleUtils.printError(e.getMessage());
+            }
         }
     }
 
     private static void printUserTable(List<User> users) {
-        System.out.printf("%-15s | %-25s | %-25s%n", "Username", "Full Name", "Email");
-        System.out.println("-".repeat(70));
-        users.forEach(u -> System.out.printf("%-15s | %-25s | %-25s%n", u.username(), u.fullName(), u.email()));
+        String[] headers = {"Username", "Full Name", "Email"};
+        List<String[]> rows = users.stream()
+                .map(u -> new String[]{u.username(), u.fullName(), u.email()})
+                .collect(Collectors.toList());
+        System.out.print(FormatUtils.formatTable(headers, rows));
     }
 
     private static void printAssignmentTable(List<RoleAssignment> list) {
-        System.out.printf("%-15s | %-15s | %-10s | %-10s | %s%n", "User", "Role", "Type", "Status", "Assigned At");
-        System.out.println("-".repeat(85));
-        list.forEach(a -> System.out.printf("%-15s | %-15s | %-10s | %-10s | %s%n",
-                a.user().username(), a.role().getName(), a.assignmentType(), a.isActive() ? "ACTIVE" : "INACTIVE", a.metadata().assignedAt()));
+        String[] headers = {"User", "Role", "Type", "Status", "Assigned At"};
+        List<String[]> rows = list.stream()
+                .map(a -> new String[]{
+                        a.user().username(),
+                        a.role().getName(),
+                        a.assignmentType(),
+                        a.isActive() ? "ACTIVE" : "INACTIVE",
+                        a.metadata().assignedAt()
+                })
+                .collect(Collectors.toList());
+        System.out.print(FormatUtils.formatTable(headers, rows));
     }
 }
