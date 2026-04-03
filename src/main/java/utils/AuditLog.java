@@ -7,10 +7,16 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.stream.Collectors;
 
 public class AuditLog {
-    private List<AuditEntry> entries;
+    private final BlockingQueue<AuditEntry> queue = new LinkedBlockingQueue<>();
+    private final List<AuditEntry> entries = new CopyOnWriteArrayList<>();
+    private Thread processorThread;
+    private volatile boolean running = true;
 
     public record AuditEntry(
             String timestamp,
@@ -36,7 +42,20 @@ public class AuditLog {
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public AuditLog() {
-        this.entries = new ArrayList<>();
+        // Запуск потока-обработчика
+        processorThread = new Thread(() -> {
+            while (running) {
+                try {
+                    AuditEntry entry = queue.take();
+                    entries.add(entry);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+        });
+        processorThread.setDaemon(true);
+        processorThread.start();
     }
 
     public void log(String action, String performer, String target, String details) {
@@ -49,7 +68,8 @@ public class AuditLog {
 
         AuditEntry entry = new AuditEntry(timestamp, action, performer,
                 normalizedTarget, normalizedDetails);
-        entries.add(entry);
+
+        queue.offer(entry);
     }
 
     public List<AuditEntry> getAll() {
@@ -108,5 +128,10 @@ public class AuditLog {
         } catch (IOException e) {
             System.err.println("Error saving audit log: " + e.getMessage());
         }
+    }
+
+    public void shutdown() {
+        running = false;
+        processorThread.interrupt();
     }
 }
