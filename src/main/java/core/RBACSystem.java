@@ -137,4 +137,9 @@ public class RBACSystem {
         }
         System.out.flush();
     }
+
+    public void shutdown() {
+        BackgroundExecutor.shutdown();
+        auditLog.shutdown();
+    }
 }
