@@ -6,10 +6,11 @@ import filters.RoleFilter;
 import repositories.Repository;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class RoleManager implements Repository<Role> {
-    private Map<String, Role> rolesById = new HashMap<>();
-    private Map<String, Role> rolesByName = new HashMap<>();
+    private Map<String, Role> rolesById = new ConcurrentHashMap<>();
+    private Map<String, Role> rolesByName = new ConcurrentHashMap<>();
 
     private AssignmentManager assignmentManager;
     public void setAssignmentManager(AssignmentManager assignmentManager) {

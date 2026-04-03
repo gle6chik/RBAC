@@ -5,10 +5,11 @@ import filters.UserFilter;
 import repositories.Repository;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public class UserManager implements Repository<User> {
-    private Map<String, User> usersByUsername = new HashMap<>();
+    private Map<String, User> usersByUsername = new ConcurrentHashMap<>();
 
     // Repository methods
     @Override

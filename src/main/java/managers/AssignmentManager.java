@@ -8,9 +8,10 @@ import filters.AssignmentFilter;
 import repositories.Repository;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AssignmentManager implements Repository<RoleAssignment> {
-    private Map<String, RoleAssignment> assignmentsById = new HashMap<>();
+    private Map<String, RoleAssignment> assignmentsById = new ConcurrentHashMap<>();
 
     private UserManager userManager;
     private RoleManager roleManager;
@@ -37,17 +38,19 @@ public class AssignmentManager implements Repository<RoleAssignment> {
             throw new IllegalArgumentException("Role '" + assignment.role().getName() + "' does not exist.");
         }
 
-        // Проверка дублирования активного назначения
-        boolean alreadyAssigned = assignmentsById.values().stream()
-                .anyMatch(a -> a.user().equals(assignment.user()) &&
-                        a.role().equals(assignment.role()) &&
-                        a.isActive());
+        // Проверка дублирования активного назначения (синхронизировано)
+        synchronized (this) {
+            boolean alreadyAssigned = assignmentsById.values().stream()
+                    .anyMatch(a -> a.user().equals(assignment.user()) &&
+                            a.role().equals(assignment.role()) &&
+                            a.isActive());
 
-        if (alreadyAssigned) {
-            throw new IllegalArgumentException("User already has active assignment for this role.");
+            if (alreadyAssigned) {
+                throw new IllegalArgumentException("User already has active assignment for this role.");
+            }
+
+            assignmentsById.put(assignment.assignmentId(), assignment);
         }
-
-        assignmentsById.put(assignment.assignmentId(), assignment);
     }
 
     @Override
