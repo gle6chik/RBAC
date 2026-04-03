@@ -14,6 +14,8 @@ public class RBACSystem {
     private AssignmentManager assignmentManager;
     private String currentUser;
 
+    private ScheduledTasks scheduledTasks;
+
     private AuditLog auditLog;
 
     public AuditLog getAuditLog() { return auditLog; }
@@ -25,6 +27,7 @@ public class RBACSystem {
         this.roleManager.setAssignmentManager(assignmentManager);
         this.currentUser = "system";
         this.auditLog = new AuditLog();
+        this.scheduledTasks = new ScheduledTasks();
     }
 
     public UserManager getUserManager() { return userManager; }
@@ -38,6 +41,7 @@ public class RBACSystem {
         Permission[] permissions = createDefaultPermissions();
         createDefaultRoles(permissions);
         createAdminUser();
+        startScheduledTasks();
     }
 
     private Permission[] createDefaultPermissions() {
@@ -138,8 +142,17 @@ public class RBACSystem {
         System.out.flush();
     }
 
+    public void startScheduledTasks() {
+        // Запускаем проверку истёкших назначений каждые 30 секунд
+        scheduledTasks.startExpiredAssignmentsCleaner(assignmentManager, auditLog, 30);
+
+        // Запускаем логирование статистики каждые 30 секунд
+        scheduledTasks.startStatisticsLogger(assignmentManager, auditLog, 30);
+    }
+
     public void shutdown() {
         BackgroundExecutor.shutdown();
         auditLog.shutdown();
+        scheduledTasks.shutdown();
     }
 }
