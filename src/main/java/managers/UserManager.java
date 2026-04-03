@@ -1,5 +1,6 @@
 package managers;
 
+import core.BackgroundExecutor;
 import model.User;
 import filters.UserFilter;
 import repositories.Repository;
@@ -91,5 +92,22 @@ public class UserManager implements Repository<User> {
 
         User updated = User.validate(username, newFullName, newEmail);
         usersByUsername.put(username, updated);
+    }
+
+    public void exportToCsvAsync(String filename) {
+        BackgroundExecutor.submit(() -> {
+            try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter(filename))) {
+                writer.println("username,fullName,email");
+                for (User user : usersByUsername.values()) {
+                    writer.printf("%s,%s,%s%n",
+                            user.username(),
+                            user.fullName(),
+                            user.email());
+                }
+                System.out.println("Export completed: " + filename);
+            } catch (Exception e) {
+                System.err.println("Export failed: " + e.getMessage());
+            }
+        });
     }
 }

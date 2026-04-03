@@ -17,6 +17,37 @@ public class CommandRegistry {
         registerPermissionCommands(parser);
         registerUtilityCommands(parser);
         registerReportCommands(parser);
+        registerAsyncCommands(parser);
+    }
+
+    private static void registerAsyncCommands(CommandParser parser) {
+        parser.registerCommand("report-users-async", "Generate user report in background", (scanner, system) -> {
+            System.out.println("Generating user report in background...");
+
+            BackgroundExecutor.submit(() -> {
+                String report = ReportGenerator.generateUserReport(
+                        system.getUserManager(),
+                        system.getAssignmentManager()
+                );
+
+                System.out.println("\n" + "=".repeat(50));
+                System.out.println("ASYNC REPORT READY");
+                System.out.println("=".repeat(50));
+                System.out.println(report);
+            });
+
+            System.out.println("Report generation started. It will appear when ready.");
+        });
+
+        parser.registerCommand("save-async", "Save all users to CSV in background", (scanner, system) -> {
+            String filename = ConsoleUtils.promptString(scanner, "Enter filename (e.g., users.csv): ", true);
+            if (!filename.endsWith(".csv")) {
+                filename += ".csv";
+            }
+
+            system.getUserManager().exportToCsvAsync(filename);
+            System.out.println("Saving users to " + filename + " in background...");
+        });
     }
 
     private static void registerReportCommands(CommandParser parser) {
