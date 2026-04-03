@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - CommandRegistryTest</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<h1>CommandRegistryTest</h1>
+<div class="breadcrumbs">
+<a href="../index.html">all</a> &gt; 
+<a href="../packages/core.html">core</a> &gt; CommandRegistryTest</div>
+<div id="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox" id="tests">
+<div class="counter">71</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="failures">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="ignored">
+<div class="counter">0</div>
+<p>ignored</p>
+</div>
+</td>
+<td>
+<div class="infoBox" id="duration">
+<div class="counter">0.633s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox success" id="successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a href="#">Tests</a>
+</li>
+<li>
+<a href="#">Standard output</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Tests</h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Method name</th>
+<th>Duration</th>
+<th>Result</th>
+</tr>
+</thead>
+<tr>
+<td class="success">assign-role: should fail when user or role does not exist</td>
+<td class="success">testAssignRoleFailure()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assign-role: should successfully create a permanent assignment</td>
+<td class="success">testAssignRolePermanent()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assign-role: should successfully create a temporary assignment with date</td>
+<td class="success">testAssignRoleTemporary()</td>
+<td class="success">0.014s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-active: should display only active assignments</td>
+<td class="success">testAssignmentActiveDisplay()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-active: should handle empty active list gracefully</td>
+<td class="success">testAssignmentActiveEmpty()</td>
+<td class="success">0.011s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-expired: should display message when no expired assignments exist</td>
+<td class="success">testAssignmentExpiredEmpty()</td>
+<td class="success">0.008s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-expired: should show only temporary assignments that are no longer active</td>
+<td class="success">testAssignmentExpiredList()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-extend: should display error when user or role does not exist</td>
+<td class="success">testAssignmentExtendNotFound()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-extend: should warn if new date is still in the past</td>
+<td class="success">testAssignmentExtendStillExpired()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-extend: should successfully extend a temporary assignment</td>
+<td class="success">testAssignmentExtendSuccess()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-extend: should fail if the assignment is not temporary</td>
+<td class="success">testAssignmentExtendWrongType()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-list-role: should display error message when role does not exist</td>
+<td class="success">testAssignmentListByRoleNotFound()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-list-role: should display users assigned to a specific role</td>
+<td class="success">testAssignmentListByRoleSuccess()</td>
+<td class="success">0.006s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-list: should display all assignments in a table format</td>
+<td class="success">testAssignmentListDisplay()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-list-user: should show empty table or no data for user without assignments</td>
+<td class="success">testAssignmentListUserEmpty()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-list-user: should display assignments only for the specified user</td>
+<td class="success">testAssignmentListUserSuccess()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-search: should handle date filters (Options 5 &amp; 6)</td>
+<td class="success">testAssignmentSearchByDates()</td>
+<td class="success">0.016s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-search: should filter by role name (Option 2)</td>
+<td class="success">testAssignmentSearchByRoleName()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-search: should filter by status (Option 4)</td>
+<td class="success">testAssignmentSearchByStatus()</td>
+<td class="success">0.009s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-search: should filter by type (Option 3)</td>
+<td class="success">testAssignmentSearchByType()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-search: should filter by username (Option 1)</td>
+<td class="success">testAssignmentSearchByUsername()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">assignment-search: should fall back to activeOnly on default/invalid choice</td>
+<td class="success">testAssignmentSearchDefault()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">clear: should invoke system clear screen logic</td>
+<td class="success">testClearCommand()</td>
+<td class="success">0.013s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">exit: should not exit if user types 'no'</td>
+<td class="success">testExitCommandCancel()</td>
+<td class="success">0.002s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">help: should call printHelp and display available commands</td>
+<td class="success">testHelpCommand()</td>
+<td class="success">0.014s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">permissions-check: should return DENIED when permission is missing</td>
+<td class="success">testPermissionsCheckDenied()</td>
+<td class="success">0.008s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">permissions-check: should return GRANTED and list source roles</td>
+<td class="success">testPermissionsCheckGranted()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">permissions-check: should show DENIED for inactive assignments</td>
+<td class="success">testPermissionsCheckInactive()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">permissions-user: should list and group permissions by resource for a valid user</td>
+<td class="success">testPermissionsUserGrouping()</td>
+<td class="success">0.013s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">permissions-user: should handle user with zero permissions</td>
+<td class="success">testPermissionsUserNoPerms()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">permissions-user: should display error message when user is not found</td>
+<td class="success">testPermissionsUserNotFound()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">revoke-role: should display error for invalid index or format</td>
+<td class="success">testRevokeRoleInvalidInput()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">revoke-role: should show message when no active assignments exist</td>
+<td class="success">testRevokeRoleNoActive()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">revoke-role: should successfully revoke an active assignment</td>
+<td class="success">testRevokeRoleSuccess()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-add-permission: should display error message when role is not found or data is invalid</td>
+<td class="success">testRoleAddPermissionFailure()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-add-permission: should successfully add a permission to an existing role</td>
+<td class="success">testRoleAddPermissionSuccess()</td>
+<td class="success">0.020s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-create: should successfully create a role and add permissions through the loop</td>
+<td class="success">testRoleCreateWithPermissions()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-create: should create a role even if no permissions are added</td>
+<td class="success">testRoleCreateWithoutPermissions()</td>
+<td class="success">0.015s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-delete: should not delete role if confirmation is not 'yes'</td>
+<td class="success">testRoleDeleteCancellation()</td>
+<td class="success">0.002s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-delete: should display error message when role not found</td>
+<td class="success">testRoleDeleteNotFound()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-delete: should successfully delete role when confirmed and not assigned</td>
+<td class="success">testRoleDeleteSuccess()</td>
+<td class="success">0.012s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-delete: should show warning when role is assigned to users</td>
+<td class="success">testRoleDeleteWithWarning()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-list: should display all registered roles in a table format</td>
+<td class="success">testRoleListDisplay()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-remove-permission: should handle invalid input and retry</td>
+<td class="success">testRoleRemovePermissionInvalidFormat()</td>
+<td class="success">0.008s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-remove-permission: should display error when role is not found</td>
+<td class="success">testRoleRemovePermissionRoleNotFound()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-remove-permission: should successfully remove permission when index is valid</td>
+<td class="success">testRoleRemovePermissionSuccess()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-search: should find roles by minimum permissions count</td>
+<td class="success">testRoleSearchByMinCount()</td>
+<td class="success">0.009s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-search: should handle invalid number format for min count filter</td>
+<td class="success">testRoleSearchByMinCountInvalidFormat()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-search: should find roles by name containing search string</td>
+<td class="success">testRoleSearchByName()</td>
+<td class="success">0.072s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-search: should find roles by permission name and resource</td>
+<td class="success">testRoleSearchByPermission()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-search: should display 'No roles found' when filter returns empty list</td>
+<td class="success">testRoleSearchNoResults()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-update: should display error message when role to update is not found</td>
+<td class="success">testRoleUpdateNotFound()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-update: should successfully update role description when role exists</td>
+<td class="success">testRoleUpdateSuccess()</td>
+<td class="success">0.019s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-view: should display error message when role is not found</td>
+<td class="success">testRoleViewNotFound()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">role-view: should display formatted role details when role exists</td>
+<td class="success">testRoleViewSuccess()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">stats: should display system statistics from the system object</td>
+<td class="success">testStatsCommand()</td>
+<td class="success">0.043s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-create: should display error message when user data is invalid</td>
+<td class="success">testUserCreateFailure()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-create: should successfully create a user when data is valid</td>
+<td class="success">testUserCreateSuccess()</td>
+<td class="success">0.009s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-delete: should not remove user if confirmation is not 'yes'</td>
+<td class="success">testUserDeleteCancellation()</td>
+<td class="success">0.014s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-delete: should show error message when user does not exist</td>
+<td class="success">testUserDeleteNotFound()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-delete: should successfully remove user and their assignments when confirmed</td>
+<td class="success">testUserDeleteSuccess()</td>
+<td class="success">0.006s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-list: should display filtered users when search logic is triggered</td>
+<td class="success">testUserListWithFilters()</td>
+<td class="success">0.004s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-list: should display all users when no filters are applied</td>
+<td class="success">testUserListWithoutFilters()</td>
+<td class="success">0.003s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-search: should display users matching the name filter</td>
+<td class="success">testUserSearchByName()</td>
+<td class="success">0.006s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-search: should handle invalid input and retry until valid choice is entered</td>
+<td class="success">testUserSearchInvalidInput()</td>
+<td class="success">0.019s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-search: should display an empty table when no users match the filter</td>
+<td class="success">testUserSearchNoResults()</td>
+<td class="success">0.010s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-update: should display error message when update fails</td>
+<td class="success">testUserUpdateFailure()</td>
+<td class="success">0.009s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-update: should successfully update user data when user exists</td>
+<td class="success">testUserUpdateSuccess()</td>
+<td class="success">0.005s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-view: should show detailed info for user with no assignments</td>
+<td class="success">testUserViewNoAssignments()</td>
+<td class="success">0.009s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-view: should display error when user is not found</td>
+<td class="success">testUserViewNotFound()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+<tr>
+<td class="success">user-view: should show roles and permissions for user with active assignments</td>
+<td class="success">testUserViewWithFullInfo()</td>
+<td class="success">0.007s</td>
+<td class="success">passed</td>
+</tr>
+</table>
+</div>
+<div class="tab">
+<h2>Standard output</h2>
+<span class="code">
+<pre>System initialized with admin user.
+</pre>
+</span>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 8.14</a> at 14 мар. 2026 г., 14:08:03</p>
+</div>
+</div>
+</body>
+</html>

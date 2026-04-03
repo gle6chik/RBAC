@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="core.CommandParserTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-03-14T07:08:03.630Z" hostname="my-laptop" time="0.031">
+  <properties/>
+  <testcase name="testCommandRegistrationAndExecution()" classname="core.CommandParserTest" time="0.003"/>
+  <testcase name="testPrintHelp()" classname="core.CommandParserTest" time="0.007"/>
+  <testcase name="testEmptyInputHandling()" classname="core.CommandParserTest" time="0.006"/>
+  <testcase name="testCommandExceptionHandling()" classname="core.CommandParserTest" time="0.003"/>
+  <testcase name="testParsingLogicWithArguments()" classname="core.CommandParserTest" time="0.001"/>
+  <testcase name="testUnknownCommandHandling()" classname="core.CommandParserTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

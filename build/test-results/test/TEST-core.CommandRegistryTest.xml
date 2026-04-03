@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="core.CommandRegistryTest" tests="71" skipped="0" failures="0" errors="0" timestamp="2026-03-14T07:08:02.777Z" hostname="my-laptop" time="0.842">
+  <properties/>
+  <testcase name="role-search: should find roles by name containing search string" classname="core.CommandRegistryTest" time="0.072"/>
+  <testcase name="role-view: should display formatted role details when role exists" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="role-create: should create a role even if no permissions are added" classname="core.CommandRegistryTest" time="0.015"/>
+  <testcase name="user-search: should handle invalid input and retry until valid choice is entered" classname="core.CommandRegistryTest" time="0.019"/>
+  <testcase name="permissions-user: should display error message when user is not found" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="revoke-role: should display error for invalid index or format" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="revoke-role: should successfully revoke an active assignment" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="assignment-search: should fall back to activeOnly on default/invalid choice" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="assignment-list-role: should display error message when role does not exist" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="role-update: should successfully update role description when role exists" classname="core.CommandRegistryTest" time="0.019"/>
+  <testcase name="role-add-permission: should successfully add a permission to an existing role" classname="core.CommandRegistryTest" time="0.02"/>
+  <testcase name="assign-role: should successfully create a temporary assignment with date" classname="core.CommandRegistryTest" time="0.014"/>
+  <testcase name="role-remove-permission: should handle invalid input and retry" classname="core.CommandRegistryTest" time="0.008"/>
+  <testcase name="assignment-extend: should successfully extend a temporary assignment" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="assignment-search: should filter by status (Option 4)" classname="core.CommandRegistryTest" time="0.009"/>
+  <testcase name="role-search: should handle invalid number format for min count filter" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="assignment-active: should handle empty active list gracefully" classname="core.CommandRegistryTest" time="0.011"/>
+  <testcase name="role-delete: should show warning when role is assigned to users" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="assignment-expired: should display message when no expired assignments exist" classname="core.CommandRegistryTest" time="0.008"/>
+  <testcase name="assignment-list-user: should show empty table or no data for user without assignments" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="assignment-list-role: should display users assigned to a specific role" classname="core.CommandRegistryTest" time="0.006"/>
+  <testcase name="role-add-permission: should display error message when role is not found or data is invalid" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="user-view: should display error when user is not found" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="role-view: should display error message when role is not found" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="user-search: should display an empty table when no users match the filter" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="role-delete: should successfully delete role when confirmed and not assigned" classname="core.CommandRegistryTest" time="0.012"/>
+  <testcase name="user-view: should show roles and permissions for user with active assignments" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="assign-role: should fail when user or role does not exist" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="permissions-check: should return DENIED when permission is missing" classname="core.CommandRegistryTest" time="0.008"/>
+  <testcase name="role-create: should successfully create a role and add permissions through the loop" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="assignment-expired: should show only temporary assignments that are no longer active" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="user-create: should successfully create a user when data is valid" classname="core.CommandRegistryTest" time="0.009"/>
+  <testcase name="user-delete: should not remove user if confirmation is not 'yes'" classname="core.CommandRegistryTest" time="0.014"/>
+  <testcase name="assignment-list-user: should display assignments only for the specified user" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="assignment-active: should display only active assignments" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="revoke-role: should show message when no active assignments exist" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="role-update: should display error message when role to update is not found" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="user-update: should successfully update user data when user exists" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="role-delete: should not delete role if confirmation is not 'yes'" classname="core.CommandRegistryTest" time="0.002"/>
+  <testcase name="user-list: should display all users when no filters are applied" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="assignment-extend: should fail if the assignment is not temporary" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="user-create: should display error message when user data is invalid" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="role-search: should display 'No roles found' when filter returns empty list" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="permissions-check: should show DENIED for inactive assignments" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="stats: should display system statistics from the system object" classname="core.CommandRegistryTest" time="0.043"/>
+  <testcase name="role-search: should find roles by permission name and resource" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="permissions-user: should handle user with zero permissions" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="assignment-extend: should display error when user or role does not exist" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="assignment-search: should handle date filters (Options 5 &amp; 6)" classname="core.CommandRegistryTest" time="0.016"/>
+  <testcase name="user-update: should display error message when update fails" classname="core.CommandRegistryTest" time="0.009"/>
+  <testcase name="permissions-user: should list and group permissions by resource for a valid user" classname="core.CommandRegistryTest" time="0.013"/>
+  <testcase name="role-search: should find roles by minimum permissions count" classname="core.CommandRegistryTest" time="0.009"/>
+  <testcase name="help: should call printHelp and display available commands" classname="core.CommandRegistryTest" time="0.014"/>
+  <testcase name="user-delete: should show error message when user does not exist" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="assign-role: should successfully create a permanent assignment" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="exit: should not exit if user types 'no'" classname="core.CommandRegistryTest" time="0.002"/>
+  <testcase name="assignment-search: should filter by type (Option 3)" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="role-delete: should display error message when role not found" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="user-view: should show detailed info for user with no assignments" classname="core.CommandRegistryTest" time="0.009"/>
+  <testcase name="role-remove-permission: should successfully remove permission when index is valid" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="user-delete: should successfully remove user and their assignments when confirmed" classname="core.CommandRegistryTest" time="0.006"/>
+  <testcase name="role-list: should display all registered roles in a table format" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="assignment-search: should filter by role name (Option 2)" classname="core.CommandRegistryTest" time="0.007"/>
+  <testcase name="assignment-search: should filter by username (Option 1)" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="permissions-check: should return GRANTED and list source roles" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="role-remove-permission: should display error when role is not found" classname="core.CommandRegistryTest" time="0.003"/>
+  <testcase name="assignment-list: should display all assignments in a table format" classname="core.CommandRegistryTest" time="0.01"/>
+  <testcase name="clear: should invoke system clear screen logic" classname="core.CommandRegistryTest" time="0.013"/>
+  <testcase name="assignment-extend: should warn if new date is still in the past" classname="core.CommandRegistryTest" time="0.005"/>
+  <testcase name="user-list: should display filtered users when search logic is triggered" classname="core.CommandRegistryTest" time="0.004"/>
+  <testcase name="user-search: should display users matching the name filter" classname="core.CommandRegistryTest" time="0.006"/>
+  <system-out><![CDATA[System initialized with admin user.
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

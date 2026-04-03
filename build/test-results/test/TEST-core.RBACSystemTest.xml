@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="core.RBACSystemTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-03-14T07:08:03.663Z" hostname="my-laptop" time="0.013">
+  <properties/>
+  <testcase name="testGenerateStatisticsEmpty()" classname="core.RBACSystemTest" time="0.002"/>
+  <testcase name="testConstructorAndGetters()" classname="core.RBACSystemTest" time="0.001"/>
+  <testcase name="testSetCurrentUser()" classname="core.RBACSystemTest" time="0.001"/>
+  <testcase name="testInitializeFullCycle()" classname="core.RBACSystemTest" time="0.001"/>
+  <testcase name="testGenerateStatisticsWithData()" classname="core.RBACSystemTest" time="0.002"/>
+  <testcase name="testClearScreen()" classname="core.RBACSystemTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
