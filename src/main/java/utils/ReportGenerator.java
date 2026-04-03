@@ -25,10 +25,18 @@ public class ReportGenerator {
 
         sb.append(String.format("Total users: %d\n\n", users.size()));
 
-        for (User user : users) {
-            // Каждый пользователь в своей рамке
-            sb.append(FormatUtils.formatBox(formatUserSection(user, assignmentManager)));
-        }
+        // parallelStream - для параллельной обработки пользователей
+        String userSections = users.parallelStream()
+                .map(user -> formatUserSection(user, assignmentManager)) // Каждый пользователь в своей рамке
+                .collect(Collectors.joining("\n"));
+
+        sb.append(userSections);
+
+        // Последовательная обработка пользователей
+//        for (User user : users) {
+//            // Каждый пользователь в своей рамке
+//            sb.append(FormatUtils.formatBox(formatUserSection(user, assignmentManager)));
+//        }
 
         sb.append(FormatUtils.formatHeader("END OF USER REPORT"));
 
@@ -226,7 +234,6 @@ public class ReportGenerator {
             return sb.toString();
         }
 
-        // Все уникальные ресурсы
         Set<String> allResources = new TreeSet<>();
         for (User user : users) {
             Set<Permission> perms = assignmentManager.getUserPermissions(user);
@@ -249,43 +256,122 @@ public class ReportGenerator {
             headers[i + 1] = resources.get(i);
         }
 
-        // Строки данных
-        List<String[]> rows = new ArrayList<>();
-        for (User user : users) {
-            String[] row = new String[resources.size() + 1];
-            row[0] = user.username();
-
-            Set<Permission> userPerms = assignmentManager.getUserPermissions(user);
-
-            for (int i = 0; i < resources.size(); i++) {
-                String resource = resources.get(i);
-                Set<String> permsForResource = userPerms.stream()
-                        .filter(p -> p.resource().equals(resource))
-                        .map(Permission::name)
-                        .collect(Collectors.toSet());
-
-                if (permsForResource.isEmpty()) {
-                    row[i + 1] = "";
-                } else {
-                    String abbr = permsForResource.stream()
-                            .map(perm -> getPermissionAbbreviation(perm))
-                            .sorted((a, b) -> {
-                                int p1 = getPriority(a);
-                                int p2 = getPriority(b);
-                                if (p1 != p2) return Integer.compare(p1, p2);
-                                return a.compareTo(b);
-                            })
-                            .collect(Collectors.joining());
-                    row[i + 1] = abbr;
-                }
-            }
-            rows.add(row);
-        }
+        // parallelStream - для параллельного построения строк
+        List<String[]> rows = users.parallelStream()
+                .map(user -> buildUserRow(user, resources, assignmentManager))
+                .collect(Collectors.toList());
 
         sb.append(FormatUtils.formatTable(headers, rows));
 
         return sb.toString();
     }
+
+    // Вспомогательный
+    private static String[] buildUserRow(User user, List<String> resources, AssignmentManager assignmentManager) {
+        String[] row = new String[resources.size() + 1];
+        row[0] = user.username();
+
+        Set<Permission> userPerms = assignmentManager.getUserPermissions(user);
+
+        for (int i = 0; i < resources.size(); i++) {
+            String resource = resources.get(i);
+            Set<String> permsForResource = userPerms.stream()
+                    .filter(p -> p.resource().equals(resource))
+                    .map(Permission::name)
+                    .collect(Collectors.toSet());
+
+            if (permsForResource.isEmpty()) {
+                row[i + 1] = "";
+            } else {
+                String abbr = permsForResource.stream()
+                        .map(perm -> getPermissionAbbreviation(perm))
+                        .sorted((a, b) -> {
+                            int p1 = getPriority(a);
+                            int p2 = getPriority(b);
+                            if (p1 != p2) return Integer.compare(p1, p2);
+                            return a.compareTo(b);
+                        })
+                        .collect(Collectors.joining());
+                row[i + 1] = abbr;
+            }
+        }
+
+        return row;
+    }
+
+//    public static String generatePermissionMatrix(UserManager userManager,
+//                                                  AssignmentManager assignmentManager) {
+//        StringBuilder sb = new StringBuilder();
+//
+//        sb.append(FormatUtils.formatHeader("PERMISSION MATRIX"));
+//
+//        List<User> users = userManager.findAll();
+//
+//        if (users.isEmpty()) {
+//            sb.append("No users found in the system.\n");
+//            return sb.toString();
+//        }
+//
+//        // Все уникальные ресурсы
+//        Set<String> allResources = new TreeSet<>();
+//        for (User user : users) {
+//            Set<Permission> perms = assignmentManager.getUserPermissions(user);
+//            perms.stream()
+//                    .map(Permission::resource)
+//                    .forEach(allResources::add);
+//        }
+//
+//        if (allResources.isEmpty()) {
+//            sb.append("No permissions assigned to any user.\n");
+//            return sb.toString();
+//        }
+//
+//        List<String> resources = new ArrayList<>(allResources);
+//
+//        // Заголовки
+//        String[] headers = new String[resources.size() + 1];
+//        headers[0] = "Username";
+//        for (int i = 0; i < resources.size(); i++) {
+//            headers[i + 1] = resources.get(i);
+//        }
+//
+//        // Строки данных
+//        List<String[]> rows = new ArrayList<>();
+//        for (User user : users) {
+//            String[] row = new String[resources.size() + 1];
+//            row[0] = user.username();
+//
+//            Set<Permission> userPerms = assignmentManager.getUserPermissions(user);
+//
+//            for (int i = 0; i < resources.size(); i++) {
+//                String resource = resources.get(i);
+//                Set<String> permsForResource = userPerms.stream()
+//                        .filter(p -> p.resource().equals(resource))
+//                        .map(Permission::name)
+//                        .collect(Collectors.toSet());
+//
+//                if (permsForResource.isEmpty()) {
+//                    row[i + 1] = "";
+//                } else {
+//                    String abbr = permsForResource.stream()
+//                            .map(perm -> getPermissionAbbreviation(perm))
+//                            .sorted((a, b) -> {
+//                                int p1 = getPriority(a);
+//                                int p2 = getPriority(b);
+//                                if (p1 != p2) return Integer.compare(p1, p2);
+//                                return a.compareTo(b);
+//                            })
+//                            .collect(Collectors.joining());
+//                    row[i + 1] = abbr;
+//                }
+//            }
+//            rows.add(row);
+//        }
+//
+//        sb.append(FormatUtils.formatTable(headers, rows));
+//
+//        return sb.toString();
+//    }
 
     private static String getPermissionAbbreviation(String permName) {
         switch (permName.toUpperCase()) {
